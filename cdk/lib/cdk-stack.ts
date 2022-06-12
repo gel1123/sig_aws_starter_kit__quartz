@@ -24,19 +24,13 @@ export class CdkStack extends Stack {
       idTokenValidity: Duration.hours(1),
       authFlows: {
         userPassword: true,
-      },
+      }
     });
     userPool.addDomain('quartz_app-userpool-domain', {
       cognitoDomain: {
         domainPrefix: 'quartz',
       },
     });
-    userPool.addResourceServer('quartz_app-userpool-resource-server', {
-      identifier: 'localhost',
-      scopes: [new cognito.ResourceServerScope({
-        scopeName: 'read',
-        scopeDescription: 'Read access to the app',
-      })]
-    });
+    
   }
 }
