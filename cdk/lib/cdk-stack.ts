@@ -68,7 +68,7 @@ export class CdkStack extends Stack {
 
     // <--------DynamoDB-------->
     // https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_dynamodb-readme.html
-    const threadsTable = new Table(this, "QuartzThreadsTable", {
+    const dynamoTable = new Table(this, "QuartzTable", {
       partitionKey: {
         name: "P",
         type: AttributeType.STRING
@@ -78,21 +78,21 @@ export class CdkStack extends Stack {
         type: AttributeType.STRING
       },
       billingMode: BillingMode.PAY_PER_REQUEST,
-      tableName: "QUARTZ_THREADS_TABLE",
+      tableName: "QUARTZ_TABLE",
       removalPolicy: RemovalPolicy.RETAIN,
       pointInTimeRecovery: false
     });
-    threadsTable.addLocalSecondaryIndex({
+    dynamoTable.addLocalSecondaryIndex({
       indexName: "QUARTZ_LSI_NAME",
       sortKey: { name: "NAME", type: AttributeType.STRING },
       projectionType: ProjectionType.ALL
     });
-    threadsTable.addLocalSecondaryIndex({
+    dynamoTable.addLocalSecondaryIndex({
       indexName: "QUARTZ_LSI_LAST",
       sortKey: { name: "LAST", type: AttributeType.NUMBER },
       projectionType: ProjectionType.ALL
     });
-    threadsTable.addLocalSecondaryIndex({
+    dynamoTable.addLocalSecondaryIndex({
       indexName: "QUARTZ_LSI_COUNT",
       sortKey: { name: "COUNT", type: AttributeType.NUMBER },
       projectionType: ProjectionType.ALL
@@ -114,7 +114,7 @@ export class CdkStack extends Stack {
       timeout: Duration.seconds(30),
       memorySize: 2048
     });
-    threadsTable.grantReadWriteData(lambdaEdge);
+    dynamoTable.grantReadWriteData(lambdaEdge);
 
     /**
      * 直書き用ARNが手に入るまでは下記2点のaddToResourcePolicyをコメントアウトしてデプロイすべき。
@@ -129,7 +129,7 @@ export class CdkStack extends Stack {
         effect: Effect.ALLOW,
         actions: ["s3:GetObject"],
         principals: [new ArnPrincipal(
-          "arn:aws:iam::904914921037:role/edge-lambda-stack-c82cecc-quartzEdgeHandlerService-ENK6M6AUAYVZ"
+          "arn:aws:iam::904914921037:role/edge-lambda-stack-c82cecc-quartzEdgeHandlerService-13RGGZK18DR81"
         )],
         resources: [appBucket.bucketArn + "/*"]
       })
@@ -139,12 +139,11 @@ export class CdkStack extends Stack {
         effect: Effect.ALLOW,
         actions: ["s3:GetObject", "s3:PutObject"],
         principals: [new ArnPrincipal(
-          "arn:aws:iam::904914921037:role/edge-lambda-stack-c82cecc-quartzEdgeHandlerService-ENK6M6AUAYVZ"
+          "arn:aws:iam::904914921037:role/edge-lambda-stack-c82cecc-quartzEdgeHandlerService-13RGGZK18DR81"
         )],
         resources: [dataBucket.bucketArn + "/*"]
       })
     );
-    // }
     // </--------Lambda-------->
 
     // <--------CloudFront-------->
