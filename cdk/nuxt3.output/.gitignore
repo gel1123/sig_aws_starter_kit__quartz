@@ -1,0 +1,4 @@
+nitro.json
+server/*
+!server/edge.mjs
+public/
