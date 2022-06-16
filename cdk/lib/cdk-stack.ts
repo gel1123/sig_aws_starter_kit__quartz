@@ -115,12 +115,21 @@ export class CdkStack extends Stack {
       memorySize: 2048
     });
     threadsTable.grantReadWriteData(lambdaEdge);
+
+    /**
+     * 直書き用ARNが手に入るまでは下記2点のaddToResourcePolicyをコメントアウトしてデプロイすべき。
+     * なお、ここで必要としているARNは `Lambda@Edge` としてCloudFrontのビヘイビアに紐づいているLambdaのARNではなく、
+     * そのLambdaに割り当てられているロールのARNである。
+     * 
+     * これは管理コンソールの us-east-1のLambdaの「アクセス権限」メニューからロールのページに飛び、
+     * そこで参照することができる。
+     */
     appBucket.addToResourcePolicy( //<= Lambda@EdgeのロールARNを取得したかったが、内包されたStackから参照できなかったのでARN直書き
       new PolicyStatement({
         effect: Effect.ALLOW,
         actions: ["s3:GetObject"],
         principals: [new ArnPrincipal(
-          "arn:aws:iam::904914921037:role/edge-lambda-stack-c8ad796-quartzEdgeHandlerServiceRol-QDGZF2O3QEMV"
+          "arn:aws:iam::904914921037:role/edge-lambda-stack-c82cecc-quartzEdgeHandlerService-ENK6M6AUAYVZ"
         )],
         resources: [appBucket.bucketArn + "/*"]
       })
@@ -130,7 +139,7 @@ export class CdkStack extends Stack {
         effect: Effect.ALLOW,
         actions: ["s3:GetObject", "s3:PutObject"],
         principals: [new ArnPrincipal(
-          "arn:aws:iam::904914921037:role/edge-lambda-stack-c8ad796-quartzEdgeHandlerServiceRol-QDGZF2O3QEMV"
+          "arn:aws:iam::904914921037:role/edge-lambda-stack-c82cecc-quartzEdgeHandlerService-ENK6M6AUAYVZ"
         )],
         resources: [dataBucket.bucketArn + "/*"]
       })
