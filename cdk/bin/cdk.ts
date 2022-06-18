@@ -4,7 +4,7 @@ import { CdkStack } from '../lib/cdk-stack';
 
 /**
  * デプロイするときのコマンド例：
- * yarn build && cdk deploy --all --profile studying --require-approval never
+ * npm run build && cdk deploy --all --profile studying --require-approval never
  * 
  * --allオプションについては後述。
  * --require-approvalオプションは、承認を必要とするかどうかを決める。

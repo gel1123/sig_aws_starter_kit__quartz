@@ -32,6 +32,7 @@ export class CdkStack extends Stack {
       idTokenValidity: Duration.hours(1),
       authFlows: {
         userPassword: true,
+        custom: true,
       },
       oAuth: {
         // UserPoolClientの「許可されているコールバック URL」に指定するURL
