@@ -36,7 +36,9 @@ export class CdkStack extends Stack {
       oAuth: {
         // UserPoolClientの「許可されているコールバック URL」に指定するURL
         callbackUrls: [
-          'http://localhost:8000'
+          'http://localhost:8000',
+          'http://localhost:3000',
+          
         ]
       }
     });
