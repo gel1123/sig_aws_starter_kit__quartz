@@ -22,8 +22,7 @@ export default defineEventHandler((event) => {
         "Authorization": `Basic ${clientIdSecretBase64}`,
       },
       body: "grant_type=authorization_code&" +
-      // "client_id=bo73u1ihm98ttrqe5dfkolq7d&" +
-      "redirect_uri=localhost:3000&" +
+      "redirect_uri=http://localhost:3000&" +
       `code=${code}`
     }).then(res => {
       const json = res.json();
@@ -31,18 +30,6 @@ export default defineEventHandler((event) => {
     }).then(json => {
       console.log({json});
     });
-    // useFetch(tokenEndpoint, {
-    //   method: 'POST',
-    //   headers: {
-    //     'Content-Type': 'application/x-www-form-urlencoded',
-    //     'Authorization': `Basic bo73u1ihm98ttrqe5dfkolq7d`
-    //   },
-    //   body: `grant_type=authorization_code&code=${code}&redirect_uri=${process.env.AUTH_REDIRECT_URI}`
-    // }).then(res => {
-    //   console.log({res});
-    // }).catch(err => {
-    //   console.log({err});
-    // });
   }
 
   if (!event.req.url?.startsWith('/api/') && !code) {
