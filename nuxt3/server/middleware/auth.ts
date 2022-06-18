@@ -11,7 +11,7 @@ export default defineEventHandler((event) => {
     const clientIdSecret = `${clientId}:${clientSecret}`;
     const clientIdSecretBase64 = Buffer.from(clientIdSecret).toString('base64');
 
-    console.log({code, clientIdSecretBase64});
+    console.log({code, clientIdSecret});
 
     // 認証コードをトークンエンドポイントにPOSTする
     const tokenEndpoint = "https://quartz.auth.ap-northeast-1.amazoncognito.com/oauth2/token";
@@ -22,7 +22,7 @@ export default defineEventHandler((event) => {
         "Authorization": `Basic ${clientIdSecretBase64}`,
       },
       body: "grant_type=authorization_code&" +
-      "client_id=bo73u1ihm98ttrqe5dfkolq7d&" +
+      // "client_id=bo73u1ihm98ttrqe5dfkolq7d&" +
       "redirect_uri=localhost:3000&" +
       `code=${code}`
     }).then(res => {
