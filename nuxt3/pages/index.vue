@@ -1,4 +1,5 @@
 <script setup lang="ts">
+definePageMeta({middleware: ['auth']});
 const onClick = () => {
   console.log('clicked');
   useFetch('/api/echo', {
