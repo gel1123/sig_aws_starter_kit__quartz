@@ -8,7 +8,7 @@
  * ```
  */
 export default defineEventHandler(async (e) => {
-  const body = await useBody(e);
+  const body =  e.req.method === 'POST' ? await useBody(e) : undefined;
   const query = await useQuery(e);
   console.log(body);
   console.log(typeof body);
