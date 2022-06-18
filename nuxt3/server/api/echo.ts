@@ -8,12 +8,12 @@
  * ```
  */
 export default defineEventHandler(async (e) => {
-  const body =  e.req.method === 'POST' ? await useBody(e) : undefined;
-  const query = await useQuery(e);
+  const body =  e.req.method === 'POST' ? await useBody<string>(e) : undefined;
+  const query = useQuery(e);
   if (typeof body === 'object') {
     Object.keys(body).forEach(k => {
       console.log(`key: ${k} value: ${body[k]}`);
     })
   }
-  return {body, query}
+  return {body, query};
 });
