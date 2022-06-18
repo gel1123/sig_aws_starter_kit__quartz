@@ -38,6 +38,7 @@ export class CdkStack extends Stack {
         callbackUrls: [
           'http://localhost:8000',
           'http://localhost:3000',
+          'https://d31y3mgphorb7z.cloudfront.net',
           
         ]
       }
