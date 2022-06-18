@@ -10,8 +10,6 @@
 export default defineEventHandler(async (e) => {
   const body =  e.req.method === 'POST' ? await useBody(e) : undefined;
   const query = await useQuery(e);
-  console.log(body);
-  console.log(typeof body);
   if (typeof body === 'object') {
     Object.keys(body).forEach(k => {
       console.log(`key: ${k} value: ${body[k]}`);
