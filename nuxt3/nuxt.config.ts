@@ -3,7 +3,7 @@ import { defineNuxtConfig } from 'nuxt'
 // https://v3.nuxtjs.org/api/configuration/nuxt.config
 export default defineNuxtConfig({
   nitro: {
-      preset: 'lambda' //<= Nuxt3をLambdaアプリケーションとして構成する設定
+      preset: 'aws-lambda' //<= Nuxt3をLambdaアプリケーションとして構成する設定
   },
   typescript: {
       strict: true
