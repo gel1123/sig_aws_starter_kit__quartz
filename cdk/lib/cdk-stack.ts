@@ -82,7 +82,7 @@ export class CdkStack extends Stack {
         type: AttributeType.STRING
       },
       billingMode: BillingMode.PAY_PER_REQUEST,
-      tableName: "QUARTZ_TABLE",
+      tableName: "QUARTZ_DYNAMODB_TABLE",
       removalPolicy: RemovalPolicy.RETAIN,
       pointInTimeRecovery: false
     });
