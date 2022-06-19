@@ -54,4 +54,4 @@ export default defineEventHandler(async (event) => {
     });
     event.res.end();
   }
-})
+});
