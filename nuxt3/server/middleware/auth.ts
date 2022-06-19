@@ -1,5 +1,8 @@
 // https://v3.nuxtjs.org/guide/features/server-routes
 export default defineEventHandler(async (event) => {
+
+  //TODO PKCE
+
   const query = useQuery(event);
   // Cognito Login Endpoint を経由して得られる認証コード
   const code = query.code;
@@ -26,7 +29,7 @@ export default defineEventHandler(async (event) => {
       `code=${code}`
     });
     const json = await res.json();
-    // console.log({json});
+    console.log({json});
     setCookie(event, "access_token", json.access_token);
     setCookie(event, "id_token", json.id_token);
     setCookie(event, "refresh_token", json.refresh_token);
