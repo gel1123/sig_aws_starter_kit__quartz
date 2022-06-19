@@ -74,11 +74,11 @@ export class CdkStack extends Stack {
     // https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_dynamodb-readme.html
     const dynamoTable = new Table(this, "QuartzTable", {
       partitionKey: {
-        name: "P",
+        name: "PK",
         type: AttributeType.STRING
       },
       sortKey: {
-        name: "S",
+        name: "SK",
         type: AttributeType.STRING
       },
       billingMode: BillingMode.PAY_PER_REQUEST,
@@ -87,18 +87,28 @@ export class CdkStack extends Stack {
       pointInTimeRecovery: false
     });
     dynamoTable.addLocalSecondaryIndex({
-      indexName: "QUARTZ_LSI_NAME",
-      sortKey: { name: "NAME", type: AttributeType.STRING },
+      indexName: "QUARTZ_LSI_1",
+      sortKey: { name: "LSI_1", type: AttributeType.STRING },
       projectionType: ProjectionType.ALL
     });
     dynamoTable.addLocalSecondaryIndex({
-      indexName: "QUARTZ_LSI_LAST",
-      sortKey: { name: "LAST", type: AttributeType.NUMBER },
+      indexName: "QUARTZ_LSI_L2",
+      sortKey: { name: "LSI_L2", type: AttributeType.STRING },
       projectionType: ProjectionType.ALL
     });
     dynamoTable.addLocalSecondaryIndex({
-      indexName: "QUARTZ_LSI_COUNT",
-      sortKey: { name: "COUNT", type: AttributeType.NUMBER },
+      indexName: "QUARTZ_LSI_3",
+      sortKey: { name: "LSI_3", type: AttributeType.STRING },
+      projectionType: ProjectionType.ALL
+    });
+    dynamoTable.addLocalSecondaryIndex({
+      indexName: "QUARTZ_LSI_4",
+      sortKey: { name: "LSI_4", type: AttributeType.STRING },
+      projectionType: ProjectionType.ALL
+    });
+    dynamoTable.addLocalSecondaryIndex({
+      indexName: "QUARTZ_LSI_5",
+      sortKey: { name: "LSI_5", type: AttributeType.STRING },
       projectionType: ProjectionType.ALL
     });
     // </--------DynamoDB-------->
