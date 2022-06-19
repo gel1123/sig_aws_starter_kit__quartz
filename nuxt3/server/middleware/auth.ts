@@ -2,6 +2,7 @@
 export default defineEventHandler(async (event) => {
 
   //TODO PKCE
+  //TODO state
 
   const query = useQuery(event);
   // Cognito Login Endpoint を経由して得られる認証コード
@@ -30,14 +31,23 @@ export default defineEventHandler(async (event) => {
     });
     const json = await res.json();
     console.log({json});
-    setCookie(event, "access_token", json.access_token);
-    setCookie(event, "id_token", json.id_token);
-    setCookie(event, "refresh_token", json.refresh_token);
-    setCookie(event, "expires_in", json.expires_in);
-    
+
+    const cookieOption = {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict" as "strict",
+      maxAge: json.expires_in
+    };
+    setCookie(event, "access_token", json.access_token, cookieOption);
+    setCookie(event, "id_token", json.id_token, cookieOption);
+    setCookie(event, "refresh_token", json.refresh_token, cookieOption);
+    setCookie(event, "expires_in", json.expires_in, cookieOption);
   }
 
-  if (!event.req.url?.startsWith('/api/') && !code) {
+  // 認証情報に関するCookie
+  const cookies = useCookies(event);
+
+  if (!cookies["access_token"] && !event.req.url?.startsWith('/api/') && !code) {
     event.res.writeHead(302, {
       Location: 'https://quartz.auth.ap-northeast-1.amazoncognito.com/login?client_id=bo73u1ihm98ttrqe5dfkolq7d&redirect_uri=http://localhost:3000&response_type=code'
     });
