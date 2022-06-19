@@ -82,7 +82,7 @@ export class CdkStack extends Stack {
         type: AttributeType.STRING
       },
       billingMode: BillingMode.PAY_PER_REQUEST,
-      tableName: "QUARTZ_DYNAMODB_TABLE",
+      tableName: "QUARTZ_TABLE",
       removalPolicy: RemovalPolicy.RETAIN,
       pointInTimeRecovery: false
     });
@@ -92,8 +92,8 @@ export class CdkStack extends Stack {
       projectionType: ProjectionType.ALL
     });
     dynamoTable.addLocalSecondaryIndex({
-      indexName: "QUARTZ_LSI_L2",
-      sortKey: { name: "LSI_L2", type: AttributeType.STRING },
+      indexName: "QUARTZ_LSI_2",
+      sortKey: { name: "LSI_2", type: AttributeType.STRING },
       projectionType: ProjectionType.ALL
     });
     dynamoTable.addLocalSecondaryIndex({
