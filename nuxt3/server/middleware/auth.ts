@@ -3,6 +3,7 @@ export default defineEventHandler(async (event) => {
 
   //TODO PKCE
   //TODO state (sessionはそのままDynamoDBに保存するのが妥当か)
+  //TODO refreshToken
 
   const query = useQuery(event);
   // Cognito Login Endpoint を経由して得られる認証コード
