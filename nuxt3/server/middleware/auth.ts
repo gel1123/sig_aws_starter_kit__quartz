@@ -1,5 +1,5 @@
 // https://v3.nuxtjs.org/guide/features/server-routes
-export default defineEventHandler((event) => {
+export default defineEventHandler(async (event) => {
   const query = useQuery(event);
   // Cognito Login Endpoint を経由して得られる認証コード
   const code = query.code;
@@ -15,7 +15,7 @@ export default defineEventHandler((event) => {
 
     // 認証コードをトークンエンドポイントにPOSTする
     const tokenEndpoint = "https://quartz.auth.ap-northeast-1.amazoncognito.com/oauth2/token";
-    fetch(tokenEndpoint, {
+    const res = await fetch(tokenEndpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
@@ -24,12 +24,14 @@ export default defineEventHandler((event) => {
       body: "grant_type=authorization_code&" +
       "redirect_uri=http://localhost:3000&" +
       `code=${code}`
-    }).then(res => {
-      const json = res.json();
-      return json;
-    }).then(json => {
-      console.log({json});
     });
+    const json = await res.json();
+    // console.log({json});
+    setCookie(event, "access_token", json.access_token);
+    setCookie(event, "id_token", json.id_token);
+    setCookie(event, "refresh_token", json.refresh_token);
+    setCookie(event, "expires_in", json.expires_in);
+    
   }
 
   if (!event.req.url?.startsWith('/api/') && !code) {
