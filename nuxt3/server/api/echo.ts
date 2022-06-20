@@ -1,23 +1,31 @@
-import jwt_decode from 'jwt-decode';
+import { CognitoJwtVerifier } from "aws-jwt-verify";
 
 /**
  * https://v3.nuxtjs.org/guide/features/server-routes/
  * 
+ * #### curl例
  * ```
  * curl -H "Content-Type: application/json" -XPOST -d '{"message":"Hello World"}' http://localhost:3000/api/echo
  * curl -H "Content-Type: application/json" -XPOST -d '{"message":"Hello World"}' https://d31y3mgphorb7z.cloudfront.net/api/echo
  * ```
+ * 
+ * #### 注：
+ * Content-Type: application/json は必須
  */
 export default defineEventHandler(async (e) => {
   const body =  e.req.method === 'POST' ? await useBody<string>(e) : undefined;
   const query = useQuery(e);
   const access_token = useCookies(e).access_token;
-  const decoded = jwt_decode<{ [name: string]: string }>(access_token);
-  console.log({decoded});
-  if (typeof body === 'object') {
-    Object.keys(body).forEach(k => {
-      console.log(`key: ${k} value: ${body[k]}`);
-    })
+  const verifier = CognitoJwtVerifier.create({
+    userPoolId: "ap-northeast-1_4LMZhoi0a",
+    tokenUse: "access",
+    clientId: "bo73u1ihm98ttrqe5dfkolq7d",
+  });
+  try {
+    // トークン検証（失敗すれば例外が発生する。例外なしなら、検証成功）
+    await verifier.verify(access_token);
+  } catch (e) {
+    return {error: "token not valid"};
   }
-  return {body, query, decoded};
+  return {body, query};
 });
