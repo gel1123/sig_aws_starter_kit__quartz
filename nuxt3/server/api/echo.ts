@@ -10,10 +10,12 @@
 export default defineEventHandler(async (e) => {
   const body =  e.req.method === 'POST' ? await useBody<string>(e) : undefined;
   const query = useQuery(e);
+  const cookies = useCookies(e);
+  console.log({cookies});
   if (typeof body === 'object') {
     Object.keys(body).forEach(k => {
       console.log(`key: ${k} value: ${body[k]}`);
     })
   }
-  return {body, query};
+  return {body, query, cookies};
 });

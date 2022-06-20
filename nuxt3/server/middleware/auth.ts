@@ -16,8 +16,6 @@ export default defineEventHandler(async (event) => {
     const clientIdSecret = `${clientId}:${clientSecret}`;
     const clientIdSecretBase64 = Buffer.from(clientIdSecret).toString('base64');
 
-    console.log({code, clientIdSecret});
-
     // 認証コードをトークンエンドポイントにPOSTする
     const tokenEndpoint = "https://quartz.auth.ap-northeast-1.amazoncognito.com/oauth2/token";
     const res = await fetch(tokenEndpoint, {
@@ -31,7 +29,6 @@ export default defineEventHandler(async (event) => {
       `code=${code}`
     });
     const json = await res.json();
-    console.log({json});
 
     const cookieOption = {
       httpOnly: true,
@@ -39,16 +36,34 @@ export default defineEventHandler(async (event) => {
       sameSite: "strict" as "strict",
       maxAge: json.expires_in
     };
-    setCookie(event, "access_token", json.access_token, cookieOption);
-    setCookie(event, "id_token", json.id_token, cookieOption);
-    setCookie(event, "refresh_token", json.refresh_token, cookieOption);
-    setCookie(event, "expires_in", json.expires_in, cookieOption);
+    json.access_token ?
+      setCookie(event, "access_token", json.access_token, cookieOption)
+      : deleteCookie(event, "access_token");
+    json.id_token ?
+      setCookie(event, "id_token", json.id_token, cookieOption)
+      : deleteCookie(event, "id_token");
+    json.refresh_token ?
+      setCookie(event, "refresh_token", json.refresh_token, cookieOption)
+      : deleteCookie(event, "refresh_token");
+    json.expires_in ?
+      setCookie(event, "expires_in", json.expires_in, cookieOption)
+      : deleteCookie(event, "expires_in");
+
+    // トークン取得に失敗したなら、再度ログイン画面にリダイレクトさせる。
+    if (!json.access_token) {
+      console.log("---- redirect (トークン取得失敗) ----");
+      event.res.writeHead(302, {
+        Location: 'https://quartz.auth.ap-northeast-1.amazoncognito.com/login?client_id=bo73u1ihm98ttrqe5dfkolq7d&redirect_uri=http://localhost:3000&response_type=code'
+      });
+      event.res.end();
+    }
   }
 
   // 認証情報に関するCookie
   const cookies = useCookies(event);
 
   if (!cookies["access_token"] && !event.req.url?.startsWith('/api/') && !code) {
+    console.log("---- redirect (ログイン試行開始) ----");
     event.res.writeHead(302, {
       Location: 'https://quartz.auth.ap-northeast-1.amazoncognito.com/login?client_id=bo73u1ihm98ttrqe5dfkolq7d&redirect_uri=http://localhost:3000&response_type=code'
     });
