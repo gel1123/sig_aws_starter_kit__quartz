@@ -1,3 +1,4 @@
+import jwt_decode from 'jwt-decode';
 
 /**
  * https://v3.nuxtjs.org/guide/features/server-routes/
@@ -10,12 +11,13 @@
 export default defineEventHandler(async (e) => {
   const body =  e.req.method === 'POST' ? await useBody<string>(e) : undefined;
   const query = useQuery(e);
-  const cookies = useCookies(e);
-  console.log({cookies});
+  const access_token = useCookies(e).access_token;
+  const decoded = jwt_decode<{ [name: string]: string }>(access_token);
+  console.log({decoded});
   if (typeof body === 'object') {
     Object.keys(body).forEach(k => {
       console.log(`key: ${k} value: ${body[k]}`);
     })
   }
-  return {body, query, cookies};
+  return {body, query, decoded};
 });
