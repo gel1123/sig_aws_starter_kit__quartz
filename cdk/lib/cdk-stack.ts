@@ -53,16 +53,17 @@ export class CdkStack extends Stack {
     
     // <--------S3-------->
     // https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_s3-readme.html
+    /** Nuxt3 Application 静的ファイル用バケット */
     const appBucket = new Bucket(this, "quartzApp-PublicBucket", {
       removalPolicy: RemovalPolicy.DESTROY
     });
-    new CfnOutput(this, "quartzApp-PublicBucket-Name", { value: appBucket.bucketName });
     const appOai = new OriginAccessIdentity(this, "quartzApp-OAI");
     appBucket.grantRead(appOai);
     new BucketDeployment(this, "quartzApp-PublicBucket-Deployment", {
       sources: [Source.asset("./nuxt3.output/public")],
       destinationBucket: appBucket
     });
+    /** 一般公開ファイル用バケット */
     const dataBucket = new Bucket(this, "quartzData-PublicBucket", {
       removalPolicy: RemovalPolicy.RETAIN
     });
@@ -174,7 +175,7 @@ export class CdkStack extends Stack {
           behaviors: [
             { // パターン的にこれが一番優先度高くなるよう定義しないと、ここに到達しないケースが生じる
               isDefaultBehavior: false,
-              pathPattern: "/*/data.json",
+              pathPattern: "/items/*",
               defaultTtl: Duration.minutes(5), //安定したらもっと長くてもOK
             }
           ]
@@ -209,13 +210,13 @@ export class CdkStack extends Stack {
               forwardedValues: { // <= QueryStringも設定しないと受け入れないので、設定する
                 queryString: true,
                 cookies: {
-                  forward: "none" //<= 現状ではCookieを使っていないので拒絶
+                  // 非推奨オプションであり、 cache policy を使用すべき
+                  forward: "all"
                 }
               }
-            }
+            },
           ]
         }
-
       ],
     });
     new CfnOutput(this, "CF URL", {
