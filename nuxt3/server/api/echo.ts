@@ -26,7 +26,10 @@ export default defineEventHandler(async (e) => {
     // トークン検証（失敗すれば例外が発生する。例外なしなら、検証成功）
     await verifier.verify(access_token);
   } catch (e) {
-    return {error: "token not valid"};
+    return {
+      status: "403",
+      body: "Unauthorized",
+    };
   }
   return {body, query};
 });
