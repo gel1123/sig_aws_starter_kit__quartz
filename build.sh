@@ -45,7 +45,7 @@ if ask_yes_no "これは Quartz をCDKでデプロイするためのビルドス
   \cp -rf ../nuxt3/.output/* nuxt3.output
   
   # build && deploy
-  npm run build && echo "ビルド＆デプロイが完了しました"
+  npm run build && echo "ビルドが完了しました"
 else
   # ここに「No」の時の処理を書く
   echo "スクリプトを中止しました"
