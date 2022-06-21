@@ -1,4 +1,6 @@
 import pkceChallengeModule from 'pkce-challenge'
+import { uuid } from 'uuidv4';
+
 
 // CommonJS形式のモジュールのnamespace import にまつわる問題のため、直接defaultをimportしている
 //（参考：https://chaika.hatenablog.com/entry/2022/05/29/083000）
@@ -20,7 +22,8 @@ export default defineEventHandler(async (event) => {
   
   //TODO PKCE
   const {code_challenge, code_verifier} = pkceChallenge();
-  setCookie(event, "transaction_id", "hogefugehoge", {
+  const transactionId = uuid();
+  setCookie(event, "transaction_id", transactionId, {
     httpOnly: true,
     secure: true,
     sameSite: "strict",

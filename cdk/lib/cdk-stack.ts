@@ -116,6 +116,18 @@ export class CdkStack extends Stack {
       sortKey: { name: "LSI_5", type: AttributeType.STRING },
       projectionType: ProjectionType.ALL
     });
+
+    const dynamoSession = new Table(this, "QuartzSession", {
+      partitionKey: {
+        name: "PK",
+        type: AttributeType.STRING
+      },
+      billingMode: BillingMode.PAY_PER_REQUEST,
+      tableName: "QUARTZ_SESSION",
+      removalPolicy: RemovalPolicy.DESTROY,
+      pointInTimeRecovery: false,
+      timeToLiveAttribute: "TTL",
+    });
     // </--------DynamoDB-------->
 
     // <--------Lambda-------->
@@ -134,6 +146,7 @@ export class CdkStack extends Stack {
       memorySize: 2048
     });
     dynamoTable.grantReadWriteData(lambdaEdge);
+    dynamoSession.grantReadWriteData(lambdaEdge);
 
     /**
      * 直書き用ARNが手に入るまでは下記2点のaddToResourcePolicyをコメントアウトしてデプロイすべき。
