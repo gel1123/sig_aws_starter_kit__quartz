@@ -11,9 +11,6 @@ export default defineEventHandler(async (event) => {
   )) {
     return;
   }
-  
-  //TODO PKCE
-  //TODO state (sessionはそのままDynamoDBに保存するのが妥当か)
 
   const query = useQuery(event);
   const config = useRuntimeConfig();
@@ -22,7 +19,6 @@ export default defineEventHandler(async (event) => {
   const code = query.code;
 
   if (code) {
-    const transactionId = cookies['transaction_id'];
 
     // for PKCE
     const DDC = getDynamoDBDocumentClient({region: config.region});
@@ -40,9 +36,20 @@ export default defineEventHandler(async (event) => {
     }
 
     const code_verifier = result.Item?.code_verifier as string | undefined;
-    if (!code_verifier) {
+    const state = result.Item?.state as string | undefined;
+    if (!code_verifier || !state) {
       event.res.writeHead(500, {"Content-Type": "text/plain"});
       event.res.end("Internal Server Error [B]");
+      return;
+    }
+
+    // Cognito Login Endpoint にパラメータとして渡したSTATEが、変化のないまま受け取れたか検証する
+    if (!state || state !== query.state) {
+      // state不一致は攻撃を受けた可能性があるので、先に進ませない
+      event.res.writeHead(302, {
+        Location: config.redirectUrl
+      });
+      event.res.end();
       return;
     }
 
