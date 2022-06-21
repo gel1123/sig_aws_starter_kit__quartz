@@ -2,7 +2,7 @@
 
 const fetchedData = ref<undefined | string>(undefined);
 
-const onClick = async () => {
+const fetch = async () => {
   console.log('clicked');
   const res = await useFetch('/api/echo', {
     method: 'POST',
@@ -16,17 +16,23 @@ const onClick = async () => {
   const data = res.data.value.body;
   console.log({data});
   fetchedData.value = data;
-}
+};
+
 </script>
 <template>
   <div>
     <Outline>
-      <p>index</p>
-      <button class="m-10 p-4 bg-slate-400 hover:opacity-70 w-3/5 rounded-lg shadow-md" @click="onClick()">fetch</button>
+      <p>You have successfully logged in!</p>
+      <button class="mt-5 mb-10 p-4 bg-slate-400 hover:opacity-70 w-full rounded-lg shadow-md" @click="fetch">fetch</button>
       <div class="bg-slate-300 text-gray-700 p-5">
         <p class="mb-2 text-gray-400">fetched data is ...</p>
-        <pre>{{fetchedData}}</pre>
+        <pre class="whitespace-pre-wrap">{{fetchedData}}</pre>
       </div>
+    </Outline>
+    <Outline>
+      <p>If you want to log out, press the button below.</p>
+      <a class="inline-block mt-5 mb-10 p-4 bg-slate-400 hover:opacity-70 w-full rounded-lg shadow-md"
+        href="/logout">logout</a>
     </Outline>
   </div>
 </template>

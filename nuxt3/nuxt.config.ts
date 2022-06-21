@@ -14,6 +14,7 @@ export default defineNuxtConfig({
     clientSecret: process.env.CLIENT_SECRET,
     tokenEndpoint: process.env.TOKEN_ENDPOINT,
     loginEndpoint: process.env.LOGIN_ENDPOINT,
+    logoutEndpoint: process.env.LOGOUT_ENDPOINT,
     redirectUrl: process.env.REDIRECT_URL,
   },
   ssr: true, //<= ビルドモードの指定。trueなら SSR or SSG. falseなら SPA. デフォルトでtrue.
