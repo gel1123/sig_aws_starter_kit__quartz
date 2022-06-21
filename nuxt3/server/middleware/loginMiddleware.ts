@@ -1,5 +1,5 @@
 import pkceChallengeModule from 'pkce-challenge'
-import { uuid } from 'uuidv4';
+import { v4 } from 'uuid';
 import { getDynamoDBDocumentClient } from '~~/repository/dynamoDBRepository';
 import { PutCommand } from "@aws-sdk/lib-dynamodb";
 
@@ -24,7 +24,8 @@ export default defineEventHandler(async (event) => {
   
   // for PKCE
   const {code_challenge, code_verifier} = pkceChallenge();
-  const transactionId = uuid();
+  const transactionId = v4();
+  console.log({transactionId});
   setCookie(event, "transaction_id", transactionId, {
     httpOnly: true,
     secure: true,
