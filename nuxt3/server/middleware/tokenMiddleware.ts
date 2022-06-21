@@ -3,18 +3,17 @@ export default defineEventHandler(async (event) => {
 
   // 認証情報に関するCookie
   const cookies = useCookies(event);
-  if (cookies['access_token']) {
+  if (cookies['access_token'] || (
+    !cookies['access_token'] && cookies['refresh_token']
+  )) {
     return;
   }
-  if (cookies['refresh_token']) {
-    //TODO アクセストークンの再取得
-  }
-
+  
   //TODO PKCE
   //TODO state (sessionはそのままDynamoDBに保存するのが妥当か)
 
-  const config = useRuntimeConfig();
   const query = useQuery(event);
+  const config = useRuntimeConfig();
 
   // Cognito Login Endpoint を経由して得られる認証コード
   const code = query.code;
@@ -63,18 +62,10 @@ export default defineEventHandler(async (event) => {
 
     // トークン取得に失敗したなら、再度ログイン画面にリダイレクトさせる。
     if (!json.access_token) {
-      console.log("---- redirect (トークン取得失敗) ----");
       event.res.writeHead(302, {
         Location: `${config.loginEndpoint}?client_id=${config.clientId}&redirect_uri=${config.redirectUrl}&response_type=code`
       });
       event.res.end();
     }
-  }
-
-  if (!event.req.url?.startsWith('/api/') && !code) {
-    event.res.writeHead(302, {
-      Location: `${config.loginEndpoint}?client_id=${config.clientId}&redirect_uri=${config.redirectUrl}&response_type=code`
-    });
-    event.res.end();
   }
 });
