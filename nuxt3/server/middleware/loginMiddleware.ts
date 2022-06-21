@@ -22,19 +22,23 @@ export default defineEventHandler(async (event) => {
   if (!cookies['access_token'] && cookies['refresh_token']) return;
   if (event.req.url !== ('/login')) return;
   
+  const config = useRuntimeConfig();
+
   // for PKCE
   const {code_challenge, code_verifier} = pkceChallenge();
   const transactionId = v4();
-  console.log({transactionId});
+  
   setCookie(event, "transaction_id", transactionId, {
     httpOnly: true,
     secure: true,
-    sameSite: "strict",
+    // ログインエンドポイントからのリダイレクト時に参照する必要があり、
+    // そのためには strict より一段階緩い lax でないといけない
+    sameSite: 'lax',
   });
   // SESSION_TABLE にトランザクションIDをキーとして、OKCEのcode_challengeを保存する
-  const DDC = getDynamoDBDocumentClient();
+  const DDC = getDynamoDBDocumentClient({region: config.region});
   const result = await DDC.send(new PutCommand({
-    TableName: process.env.SESSION_TABLE,
+    TableName: config.sessionTable,
     Item: {
       PK: transactionId,
       code_verifier,
@@ -52,7 +56,6 @@ export default defineEventHandler(async (event) => {
   //TODO state (sessionはそのままDynamoDBに保存するのが妥当か)
 
   const query = useQuery(event);
-  const config = useRuntimeConfig();
 
   // Cognito Login Endpoint を経由して得られる認証コード
   const code = query.code;

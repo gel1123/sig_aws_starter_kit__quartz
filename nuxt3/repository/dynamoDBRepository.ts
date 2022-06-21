@@ -3,14 +3,18 @@ import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 
 let memo = {} as { client?: DynamoDBDocumentClient};
 
-export const getDynamoDBDocumentClient = () => {
+export const getDynamoDBDocumentClient = ({region}: {region: string}) => {
   if (memo.client) return memo.client;
 
-  const config = useRuntimeConfig();
   const dbClient = new DynamoDBClient({
-    region: config.region, //<= Lambda@Edgeとして動かすのでリージョンを明示
+    // Lambda@Edgeとして動かすのでリージョンを明示
+    region
   });
-  const _dynamoDBDocumentClient = DynamoDBDocumentClient.from(dbClient);
+  const _dynamoDBDocumentClient = DynamoDBDocumentClient.from(dbClient, {
+    marshallOptions: {
+      removeUndefinedValues: true
+    }
+  });
   memo.client = _dynamoDBDocumentClient;
   return _dynamoDBDocumentClient;
 }
