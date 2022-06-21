@@ -1,3 +1,13 @@
+import pkceChallengeModule from 'pkce-challenge'
+
+// CommonJS形式のモジュールのnamespace import にまつわる問題のため、直接defaultをimportしている
+//（参考：https://chaika.hatenablog.com/entry/2022/05/29/083000）
+// @ts-ignore
+const pkceChallenge = pkceChallengeModule.default as (length?: number) => {
+  code_verifier: string;
+  code_challenge: string;
+};
+
 // https://v3.nuxtjs.org/guide/features/server-routes
 export default defineEventHandler(async (event) => {
 
@@ -9,6 +19,7 @@ export default defineEventHandler(async (event) => {
   if (event.req.url !== ('/login')) return;
   
   //TODO PKCE
+  const {code_challenge, code_verifier} = pkceChallenge();
   setCookie(event, "transaction_id", "hogefugehoge", {
     httpOnly: true,
     secure: true,
@@ -25,7 +36,12 @@ export default defineEventHandler(async (event) => {
 
   if (!event.req.url?.startsWith('/api/') && !code) {
     event.res.writeHead(302, {
-      Location: `${config.loginEndpoint}?client_id=${config.clientId}&redirect_uri=${config.redirectUrl}&response_type=code`
+      Location: `${config.loginEndpoint}?`
+        + `client_id=${config.clientId}&`
+        + `redirect_uri=${config.redirectUrl}&`
+        + "response_type=code&"
+        + "code_challenge_method=S256&"
+        + `code_challenge=${code_challenge}&`
     });
     event.res.end();
   }
