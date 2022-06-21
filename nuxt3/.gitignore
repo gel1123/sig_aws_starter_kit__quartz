@@ -5,4 +5,7 @@ node_modules
 .cache
 .output
 .env
+.local.env
+.dev.env
+.prod.env
 dist
