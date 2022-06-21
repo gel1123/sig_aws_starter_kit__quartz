@@ -5,7 +5,6 @@
  * #### curl例
  * ```
  * curl -H "Content-Type: application/json" -XPOST -d '{"message":"Hello World"}' http://localhost:3000/api/echo
- * curl -H "Content-Type: application/json" -XPOST -d '{"message":"Hello World"}' https://d31y3mgphorb7z.cloudfront.net/api/echo
  * ```
  * 
  * #### 注：
