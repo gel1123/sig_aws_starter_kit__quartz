@@ -9,11 +9,12 @@ export default defineNuxtConfig({
       strict: true
   },
   privateRuntimeConfig: {
-      threadsTableName: process.env.THREADS_TABLE_NAME,
-      region: process.env.REGION,
-      mode: process.env.MODE,
-      bucket: process.env.BUCKET,
-      domain: process.env.DOMAIN
+    clientId: process.env.CLIENT_ID,
+    userPoolId: process.env.USER_POOL_ID,
+    clientSecret: process.env.CLIENT_SECRET,
+    tokenEndpoint: process.env.TOKEN_ENDPOINT,
+    loginEndpoint: process.env.LOGIN_ENDPOINT,
+    redirectUrl: process.env.REDIRECT_URL,
   },
   ssr: true, //<= ビルドモードの指定。trueなら SSR or SSG. falseなら SPA. デフォルトでtrue.
   target: 'server', //<= ビルドモードの指定。'server'なら SSR. 'static'なら SSG or SPA. デフォルトで 'server'.
