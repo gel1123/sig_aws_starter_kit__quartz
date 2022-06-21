@@ -5,7 +5,7 @@ async function handler(event, context, callback) {
   const bodyData = event.Records[0].cf.request.body &&
     event.Records[0].cf.request.body.data &&
     Buffer.from(event.Records[0].cf.request.body.data, 'base64').toString();
-  // Lambda@Edge向けリクエスト形式を、Nuxt3がビルドしたindex.mjs（Lambdaプロキシ統合を想定）に変換する
+  // Lambda@Edge向けリクエスト形式を、Nuxt3がビルドしたindex.mjsに変換する（Lambdaプロキシ統合としての形式）
   const urlSearchParamsEntries = new URLSearchParams(event.Records[0].cf.request.querystring).entries();
   const queryStringParameters = Object.fromEntries(urlSearchParamsEntries);
   /**
