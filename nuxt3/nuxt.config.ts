@@ -11,6 +11,10 @@ export default defineNuxtConfig({
   privateRuntimeConfig: {
     isDev: process.env.NODE_ENV === 'development',
     region: process.env.AWS_REGION,
+    dataTable: process.env.DATA_TABLE,
+    sessionTable: process.env.SESSION_TABLE,
+
+    // Cognito関連
     clientId: process.env.CLIENT_ID,
     userPoolId: process.env.USER_POOL_ID,
     clientSecret: process.env.CLIENT_SECRET,
