@@ -44,13 +44,26 @@ async function handler(event, context, callback) {
   console.info("[edge.mjs] event.Records[0].cf.request:", JSON.stringify(event.Records[0].cf.request));
   // Lambda@Edge用に応答形式を変換
   const res = await output.handler(e, context);
+  console.info("[edge.mjs] res.headers:", JSON.stringify(res.headers));
   const edgeRes = {
     status: res.statusCode,
     headers: {
-      'content-type': [{
+      'content-type': res.headers['content-type'] ? [{
         key: 'Content-Type',
         value: res.headers['content-type']
-      }]
+      }] : [],
+      'location': res.headers['location'] ? [{
+        key: 'Location',
+        value: res.headers['location']
+      }] : [],
+      'set-cookie': res.headers['set-cookie'] ? res.headers['set-cookie'].split(",").map(c => {
+        // 同一ヘッダはコンマ区切りで返されるので、小分けにしてやる必要あり
+        // https://docs.aws.amazon.com/ja_jp/apigateway/latest/developerguide/http-api-develop-integrations-lambda.html
+        return {
+          key: 'Set-Cookie',
+          value: c
+        }
+      }) : [],
     },
     body: res.body
   };
