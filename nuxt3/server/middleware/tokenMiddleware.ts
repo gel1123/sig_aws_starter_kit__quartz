@@ -22,11 +22,12 @@ export default defineEventHandler(async (event) => {
   const code = query.code;
 
   if (code) {
+    const transactionId = cookies['transaction_id'];
 
     // for PKCE
-    const DDC = getDynamoDBDocumentClient();
+    const DDC = getDynamoDBDocumentClient({region: config.region});
     const result = await DDC.send(new GetCommand({
-      TableName: process.env.SESSION_TABLE,
+      TableName: config.sessionTable,
       Key: {
         PK: cookies['transaction_id'],
       }
