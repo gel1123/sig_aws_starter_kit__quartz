@@ -1,3 +1,6 @@
+import { getDynamoDBDocumentClient } from "~~/repository/dynamoDBRepository";
+import { GetCommand, GetCommandInput, PutCommand, PutCommandInput, QueryCommand, QueryCommandInput } from "@aws-sdk/lib-dynamodb";
+
 // https://v3.nuxtjs.org/guide/features/server-routes
 export default defineEventHandler(async (event) => {
 
@@ -19,6 +22,29 @@ export default defineEventHandler(async (event) => {
   const code = query.code;
 
   if (code) {
+
+    // for PKCE
+    const DDC = getDynamoDBDocumentClient();
+    const result = await DDC.send(new GetCommand({
+      TableName: process.env.SESSION_TABLE,
+      Key: {
+        PK: cookies['transaction_id'],
+      }
+    }));
+
+    if (result.$metadata.httpStatusCode !== 200) {
+      event.res.writeHead(result.$metadata.httpStatusCode ?? 500, {"Content-Type": "text/plain"});
+      event.res.end("Internal Server Error [A]");
+      return;
+    }
+
+    const code_verifier = result.Item?.code_verifier as string | undefined;
+    if (!code_verifier) {
+      event.res.writeHead(500, {"Content-Type": "text/plain"});
+      event.res.end("Internal Server Error [B]");
+      return;
+    }
+
     // Base64Encode(client_id:client_secret) を生成する
     const clientIdSecret = `${config.clientId}:${config.clientSecret}`;
     const clientIdSecretBase64 = Buffer.from(clientIdSecret).toString('base64');
@@ -33,7 +59,8 @@ export default defineEventHandler(async (event) => {
       },
       body: "grant_type=authorization_code&" +
       `redirect_uri=${config.redirectUrl}&` +
-      `code=${code}`
+      `code=${code}&` + 
+      `code_verifier=${code_verifier}`
     });
     const json = await res.json();
 
@@ -68,10 +95,10 @@ export default defineEventHandler(async (event) => {
       })
       : deleteCookie(event, "is_logged_in");
 
-    // トークン取得に失敗したなら、再度ログイン画面にリダイレクトさせる。
+    // トークン取得に失敗したなら、ログイン前の状態のままトップページにリダイレクトさせる。
     if (!json.access_token) {
       event.res.writeHead(302, {
-        Location: `${config.loginEndpoint}?client_id=${config.clientId}&redirect_uri=${config.redirectUrl}&response_type=code`
+        Location: config.redirectUrl
       });
       event.res.end();
     }

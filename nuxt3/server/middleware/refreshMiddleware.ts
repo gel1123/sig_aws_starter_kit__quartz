@@ -19,10 +19,13 @@ export default defineEventHandler(async (event) => {
         maxAge: json.expires_in,
       })
       : deleteCookie(event, "access_token");
-     // トークン取得に失敗したなら、再度ログイン画面にリダイレクトさせる。
+    
+    // トークン取得に失敗したなら、ログイン前の状態のままトップページにリダイレクトさせる。
     if (!json.access_token) {
+      deleteCookie(event, "refresh_token");
+      deleteCookie(event, "is_logged_in");
       event.res.writeHead(302, {
-        Location: `${config.loginEndpoint}?client_id=${config.clientId}&redirect_uri=${config.redirectUrl}&response_type=code`
+        Location: config.redirectUrl
       });
       event.res.end();
     }

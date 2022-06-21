@@ -1,5 +1,7 @@
 import pkceChallengeModule from 'pkce-challenge'
 import { uuid } from 'uuidv4';
+import { getDynamoDBDocumentClient } from '~~/repository/dynamoDBRepository';
+import { PutCommand } from "@aws-sdk/lib-dynamodb";
 
 
 // CommonJS形式のモジュールのnamespace import にまつわる問題のため、直接defaultをimportしている
@@ -20,7 +22,7 @@ export default defineEventHandler(async (event) => {
   if (!cookies['access_token'] && cookies['refresh_token']) return;
   if (event.req.url !== ('/login')) return;
   
-  //TODO PKCE
+  // for PKCE
   const {code_challenge, code_verifier} = pkceChallenge();
   const transactionId = uuid();
   setCookie(event, "transaction_id", transactionId, {
@@ -28,6 +30,23 @@ export default defineEventHandler(async (event) => {
     secure: true,
     sameSite: "strict",
   });
+  // SESSION_TABLE にトランザクションIDをキーとして、OKCEのcode_challengeを保存する
+  const DDC = getDynamoDBDocumentClient();
+  const result = await DDC.send(new PutCommand({
+    TableName: process.env.SESSION_TABLE,
+    Item: {
+      PK: transactionId,
+      code_verifier,
+      // TTL属性の値は、Unix エポック時間形式のタイムスタンプ (秒単位) であり、ここでは5分後になるように設定している
+      TTL: Math.floor(Date.now() / 1000) + 300,
+    },
+  }));
+
+  if (result.$metadata.httpStatusCode !== 200) {
+    event.res.writeHead(result.$metadata.httpStatusCode ?? 500, {"Content-Type": "text/plain"});
+    event.res.end("Internal Server Error");
+    return;
+  }
   
   //TODO state (sessionはそのままDynamoDBに保存するのが妥当か)
 
