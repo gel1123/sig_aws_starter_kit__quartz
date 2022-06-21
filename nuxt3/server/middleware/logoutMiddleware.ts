@@ -5,8 +5,6 @@ export default defineEventHandler(async (event) => {
 
   // 認証情報に関するCookie
   const cookies = useCookies(event);
-  
-  //TODO state
 
   const query = useQuery(event);
   const config = useRuntimeConfig();
