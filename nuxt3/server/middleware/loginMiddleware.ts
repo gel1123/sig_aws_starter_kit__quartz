@@ -3,13 +3,18 @@ export default defineEventHandler(async (event) => {
 
   // 認証情報に関するCookie
   const cookies = useCookies(event);
-  if (cookies['access_token'] || (
-    !cookies['access_token'] && cookies['refresh_token']
-  )) {
-    return;
-  }
+  
+  if (cookies['access_token']) return;
+  if (!cookies['access_token'] && cookies['refresh_token']) return;
+  if (event.req.url !== ('/login')) return;
   
   //TODO PKCE
+  setCookie(event, "transaction_id", "hogefugehoge", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "strict",
+  });
+  
   //TODO state (sessionはそのままDynamoDBに保存するのが妥当か)
 
   const query = useQuery(event);
