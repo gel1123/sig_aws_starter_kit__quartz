@@ -27,6 +27,9 @@ export default defineEventHandler(async (event) => {
   // for PKCE
   const {code_challenge, code_verifier} = pkceChallenge();
   const transactionId = v4();
+
+  // for STATE
+  const state = v4();
   
   setCookie(event, "transaction_id", transactionId, {
     httpOnly: true,
@@ -42,6 +45,7 @@ export default defineEventHandler(async (event) => {
     Item: {
       PK: transactionId,
       code_verifier,
+      state,
       // TTL属性の値は、Unix エポック時間形式のタイムスタンプ (秒単位) であり、ここでは5分後になるように設定している
       TTL: Math.floor(Date.now() / 1000) + 300,
     },
@@ -52,8 +56,6 @@ export default defineEventHandler(async (event) => {
     event.res.end("Internal Server Error");
     return;
   }
-  
-  //TODO state (sessionはそのままDynamoDBに保存するのが妥当か)
 
   const query = useQuery(event);
 
@@ -68,6 +70,7 @@ export default defineEventHandler(async (event) => {
         + "response_type=code&"
         + "code_challenge_method=S256&"
         + `code_challenge=${code_challenge}&`
+        + `state=${state}`
     });
     event.res.end();
   }
