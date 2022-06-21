@@ -59,6 +59,14 @@ export default defineEventHandler(async (event) => {
         // https://docs.aws.amazon.com/cognito/latest/developerguide/amazon-cognito-user-pools-using-the-refresh-token.html
       })
       : deleteCookie(event, "refresh_token");
+    json.refresh_token ?
+      setCookie(event, "is_logged_in", "1", {
+        // Nuxt3フロントエンドにおけるログイン判定用クッキーであるため、httpOnlyをfalseにしている
+        httpOnly: false,
+        secure: true,
+        sameSite: "strict",
+      })
+      : deleteCookie(event, "is_logged_in");
 
     // トークン取得に失敗したなら、再度ログイン画面にリダイレクトさせる。
     if (!json.access_token) {
