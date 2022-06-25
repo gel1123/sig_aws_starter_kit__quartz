@@ -57,22 +57,27 @@ export class CdkStack extends Stack {
     
     // <--------S3-------->
     // https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_s3-readme.html
+
     /** Nuxt3 Application 静的ファイル用バケット */
     const appBucket = new Bucket(this, "quartzApp-PublicBucket", {
-      removalPolicy: RemovalPolicy.DESTROY
+      removalPolicy: RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
     });
     const appOai = new OriginAccessIdentity(this, "quartzApp-OAI");
-    appBucket.grantRead(appOai);
+    // CloudFrontの s3OriginSource の設定で最低限のGet権限が付与されるので、下記はいらない
+    // appBucket.grantRead(appOai);
     new BucketDeployment(this, "quartzApp-PublicBucket-Deployment", {
       sources: [Source.asset("./nuxt3.output/public")],
       destinationBucket: appBucket
     });
+    
     /** 一般公開ファイル用バケット */
     const dataBucket = new Bucket(this, "quartzData-PublicBucket", {
       removalPolicy: RemovalPolicy.RETAIN
     });
     const dataOai = new OriginAccessIdentity(this, "quartzData-OAI");
-    dataBucket.grantRead(dataOai);
+    // CloudFrontの s3OriginSource の設定で最低限のGet権限が付与されるので、下記はいらない
+    // dataBucket.grantRead(dataOai);
     // </--------S3-------->
 
     // <--------DynamoDB-------->
@@ -155,27 +160,32 @@ export class CdkStack extends Stack {
      * 
      * これは管理コンソールの us-east-1のLambdaの「アクセス権限」メニューからロールのページに飛び、
      * そこで参照することができる。
+     * 
+     * _____________
+     * 
+     * 追記：
+     * もしかして過剰だった....? と思い一部をコメントアウト。
      */
-    appBucket.addToResourcePolicy( //<= Lambda@EdgeのロールARNを取得したかったが、内包されたStackから参照できなかったのでARN直書き
-      new PolicyStatement({
-        effect: Effect.ALLOW,
-        actions: ["s3:GetObject"],
-        principals: [new ArnPrincipal(
-          "arn:aws:iam::904914921037:role/edge-lambda-stack-c82cecc-quartzEdgeHandlerService-13RGGZK18DR81"
-        )],
-        resources: [appBucket.bucketArn + "/*"]
-      })
-    );
-    dataBucket.addToResourcePolicy( //<= Lambda@EdgeのロールARNを取得したかったが、内包されたStackから参照できなかったのでARN直書き
-      new PolicyStatement({
-        effect: Effect.ALLOW,
-        actions: ["s3:GetObject", "s3:PutObject"],
-        principals: [new ArnPrincipal(
-          "arn:aws:iam::904914921037:role/edge-lambda-stack-c82cecc-quartzEdgeHandlerService-13RGGZK18DR81"
-        )],
-        resources: [dataBucket.bucketArn + "/*"]
-      })
-    );
+    // appBucket.addToResourcePolicy( //<= Lambda@EdgeのロールARNを取得したかったが、内包されたStackから参照できなかったのでARN直書き
+    //   new PolicyStatement({
+    //     effect: Effect.ALLOW,
+    //     actions: ["s3:GetObject"],
+    //     principals: [new ArnPrincipal(
+    //       "arn:aws:iam::904914921037:role/edge-lambda-stack-c82cecc-quartzEdgeHandlerService-13RGGZK18DR81"
+    //     )],
+    //     resources: [appBucket.bucketArn + "/*"]
+    //   })
+    // );
+    // dataBucket.addToResourcePolicy( //<= Lambda@EdgeのロールARNを取得したかったが、内包されたStackから参照できなかったのでARN直書き
+    //   new PolicyStatement({
+    //     effect: Effect.ALLOW,
+    //     actions: ["s3:GetObject", "s3:PutObject"],
+    //     principals: [new ArnPrincipal(
+    //       "arn:aws:iam::904914921037:role/edge-lambda-stack-c82cecc-quartzEdgeHandlerService-13RGGZK18DR81"
+    //     )],
+    //     resources: [dataBucket.bucketArn + "/*"]
+    //   })
+    // );
     // </--------Lambda-------->
 
     // <--------CloudFront-------->
