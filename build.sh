@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/bin/sh
 
 function ask_yes_no {
   while true; do
