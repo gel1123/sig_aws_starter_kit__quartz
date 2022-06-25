@@ -2,7 +2,7 @@ import { UserPool } from 'aws-cdk-lib/aws-cognito';
 import { CfnOutput, Duration, PhysicalName, RemovalPolicy, Stack, StackProps } from "aws-cdk-lib";
 import { AllowedMethods, CachePolicy, CloudFrontAllowedMethods, CloudFrontWebDistribution, Distribution, experimental, LambdaEdgeEventType, OriginAccessIdentity, OriginRequestCookieBehavior, OriginRequestPolicy, PriceClass, ViewerProtocolPolicy } from "aws-cdk-lib/aws-cloudfront";
 import { AttributeType, BillingMode, ProjectionType, Table } from "aws-cdk-lib/aws-dynamodb";
-// import { ArnPrincipal, Effect, PolicyStatement } from "aws-cdk-lib/aws-iam";
+import { ArnPrincipal, CanonicalUserPrincipal, Effect, PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { Code, Runtime } from "aws-cdk-lib/aws-lambda";
 import { RetentionDays } from "aws-cdk-lib/aws-logs";
 import { Bucket } from "aws-cdk-lib/aws-s3";
@@ -13,61 +13,17 @@ import { S3Origin } from 'aws-cdk-lib/aws-cloudfront-origins';
 export class CdkStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
-
-    // <--------Cognito-------->
-    // https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_cognito-readme.html
-    const userPool = new UserPool(this, 'quartz_userpool', {
-      userPoolName: 'quartz_app-userpool',
-      signInAliases: {
-        username: true,
-        email: true,
-      },
-      autoVerify: {
-        email: true,
-      },
-    });
-    userPool.addClient('quartz_app-userpool-client', {
-      userPoolClientName: 'quartz_app-userpool-client',
-      generateSecret: true,
-      accessTokenValidity: Duration.hours(1),
-      idTokenValidity: Duration.hours(1),
-      authFlows: {
-        userPassword: true,
-        custom: true,
-      },
-      oAuth: {
-        // UserPoolClientの「許可されているコールバック URL」に指定するURL
-        callbackUrls: [
-          'http://localhost:8000',
-          'http://localhost:3000',
-          'https://d31y3mgphorb7z.cloudfront.net', 
-        ],
-        logoutUrls: [
-          'http://localhost:8000',
-          'http://localhost:3000',
-          'https://d31y3mgphorb7z.cloudfront.net', 
-        ]
-      }
-    });
-    userPool.addDomain('quartz_app-userpool-domain', {
-      cognitoDomain: {
-        domainPrefix: 'quartz',
-      },
-    });
-    // </--------Cognito-------->
     
     // <--------S3-------->
     // https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_s3-readme.html
 
     /** Nuxt3 Application 静的ファイル用バケット */
-    const appBucket = new Bucket(this, "quartzApp-PublicBucket", {
+    const appBucket = new Bucket(this, "quartzNuxt3App-PublicBucket", {
       removalPolicy: RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
     });
-    const appOai = new OriginAccessIdentity(this, "quartzApp-OAI");
-    // CloudFrontの s3OriginSource の設定で最低限のGet権限が付与されるので、下記はいらない
-    // appBucket.grantRead(appOai);
-    new BucketDeployment(this, "quartzApp-PublicBucket-Deployment", {
+    const appOai = new OriginAccessIdentity(this, "quartzNuxt3App-OAI");
+    new BucketDeployment(this, "quartzNuxt3App-PublicBucket-Deployment", {
       sources: [Source.asset("./nuxt3.output/public")],
       destinationBucket: appBucket
     });
@@ -105,8 +61,6 @@ export class CdkStack extends Stack {
       removalPolicy: RemovalPolicy.RETAIN
     });
     const dataOai = new OriginAccessIdentity(this, "quartzData-OAI");
-    // CloudFrontの s3OriginSource の設定で最低限のGet権限が付与されるので、下記はいらない
-    // dataBucket.grantRead(dataOai);
     // </--------S3-------->
 
     // <--------DynamoDB-------->
@@ -346,7 +300,7 @@ export class CdkStack extends Stack {
         },
         "/*.*": {
           origin: appBucketOrigin,
-          cachePolicy: new CachePolicy(this, "QuartzAppBucketCachePolicy", {
+          cachePolicy: new CachePolicy(this, "QuartzNuxt3AppBucketCachePolicy", {
             minTtl: Duration.minutes(2),
             defaultTtl: Duration.minutes(4),
             maxTtl: Duration.minutes(5),
@@ -355,9 +309,80 @@ export class CdkStack extends Stack {
       },
     });
 
+    appBucket.addToResourcePolicy(new PolicyStatement({
+      actions: ["s3:GetObject"],
+      principals: [
+        new CanonicalUserPrincipal(appOai.cloudFrontOriginAccessIdentityS3CanonicalUserId)
+      ],
+      resources: [`${appBucket.bucketArn}/*`]
+    }));
+
+    dataBucket.addToResourcePolicy(new PolicyStatement({
+      actions: ["s3:GetObject"],
+      principals: [
+        new CanonicalUserPrincipal(dataOai.cloudFrontOriginAccessIdentityS3CanonicalUserId),
+      ],
+      resources: [`${dataBucket.bucketArn}/*`]
+    }));
+
+    if (lambdaEdge.role?.roleArn) {
+      console.log("Lambda@Edgeの割り当てられたIAMロールのARNの取得に成功しました : ", lambdaEdge.role.roleArn);
+      dataBucket.addToResourcePolicy(new PolicyStatement({
+        actions: ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
+        principals: [
+          new ArnPrincipal(lambdaEdge.role.roleArn)
+        ],
+        resources: [`${dataBucket.bucketArn}/*`]
+      }));
+    } else {
+      console.log("Lambda@Edgeの割り当てられたIAMロールのARNの取得に失敗しました");
+    }
+
     new CfnOutput(this, "CF URL", {
       value: `https://${distribution.distributionDomainName}`
     });
     // </--------CloudFront-------->
+
+    // <--------Cognito-------->
+    // https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_cognito-readme.html
+    const userPool = new UserPool(this, 'quartz_userpool', {
+      userPoolName: 'quartz_app-userpool',
+      signInAliases: {
+        username: true,
+        email: true,
+      },
+      autoVerify: {
+        email: true,
+      },
+    });
+    userPool.addClient('quartz_app-userpool-client', {
+      userPoolClientName: 'quartz_app-userpool-client',
+      generateSecret: true,
+      accessTokenValidity: Duration.hours(1),
+      idTokenValidity: Duration.hours(1),
+      authFlows: {
+        userPassword: true,
+        custom: true,
+      },
+      oAuth: {
+        // UserPoolClientの「許可されているコールバック URL」に指定するURL
+        callbackUrls: [
+          'http://localhost:8000',
+          'http://localhost:3000',
+          distribution.distributionDomainName, 
+        ],
+        logoutUrls: [
+          'http://localhost:8000',
+          'http://localhost:3000',
+          distribution.distributionDomainName, 
+        ]
+      }
+    });
+    userPool.addDomain('quartz_app-userpool-domain', {
+      cognitoDomain: {
+        domainPrefix: 'quartz',
+      },
+    });
+    // </--------Cognito-------->
   }
 }
