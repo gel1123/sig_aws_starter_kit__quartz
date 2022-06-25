@@ -24,8 +24,17 @@ const app = new cdk.App();
  * 増えたため、現在では ap-northeast-1 リージョンでクロスリージョンデプロイしている。
  */ 
 new CdkStack(app, 'QuartzStack', {env: {
-  // 実行時環境変数を使うならこう
-  // AWS_ACCOUNT=$(node -e "console.log($(aws sts get-caller-identity --profile PROFILE_NAME).Account)") cdk deploy --all --profile PROFILE_NAME --require-approval never
+
+  /**
+   * aws sts get-caller-identity --profile PROFILE_NAME でアカウントIDを取得できる
+   *
+   * なお実行時環境変数を使うならこう
+   * ```
+   * AWS_ACCOUNT=$(node -e "console.log($(aws sts get-caller-identity --profile PROFILE_NAME).Account)") \
+   * cdk deploy --all --profile PROFILE_NAME --require-approval never
+   * ```
+   */
   account: process.env.AWS_ACCOUNT,
+
   region: "ap-northeast-1"
 }});
