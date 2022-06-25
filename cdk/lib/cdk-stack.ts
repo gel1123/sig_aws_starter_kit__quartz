@@ -240,6 +240,16 @@ export class CdkStack extends Stack {
 
     // <--------CloudFront-------->
     // https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_cloudfront-readme.html
+
+    /**
+     * CloudFrontWebDistribution は 2022年2月時点の情報によると
+     * 近いうちに非推奨になるとのこと。
+     * そういった経緯により、Cookieまわりの新しい推奨オプションであるところの
+     * OriginRequestPolicyや、CachePolicyを用いた設定が実装されていない。
+     * 
+     * これに代わって推奨されるのは Distribution クラスとのこと。
+     * そちらでは上記Cookie周りのオプションが対応している。
+     */ 
     const distribution = new CloudFrontWebDistribution(this, "quartzCdn", {
       priceClass: PriceClass.PRICE_CLASS_200, // 価格クラス200以降は日本を含む
       defaultRootObject: "", //<= defaultでは index.html になるが、不要なのであえて空文字にしておく
@@ -290,7 +300,8 @@ export class CdkStack extends Stack {
                   // 非推奨オプションであり、 cache policy を使用すべき
                   forward: "all"
                 }
-              }
+              },
+              
             },
           ]
         }
