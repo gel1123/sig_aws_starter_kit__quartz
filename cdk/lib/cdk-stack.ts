@@ -74,8 +74,31 @@ export class CdkStack extends Stack {
     /** 一般公開ファイル用バケット */
     const dataBucket = new Bucket(this, "quartzData-PublicBucket", {
 
-      // Cannot generate a physical name for QuartzStack/quartzData-PublicBucket,
-      // because the account is un-resolved or missing.
+      /**
+       * PhysicalName.GENERATE_IF_NEEDED は 内部でus-east1リージョンの子Stackを
+       * 作成するEdgeFunctionと、別リージョンの親スタックで定義するS3との間で
+       * 生じるエラーを防ぐことができる。
+       * 
+       * （これは論理名ではなく実際にAWS上でリソース名として割り当てられる物理名を
+       * 必要に応じて生成することで、マルチリージョン構成時のエラーを防ぐという仕組みになっている模様）
+       * 
+       * なお、PhysicalName.GENERATE_IF_NEEDED を正常にクロスリージョン時に動作させるには
+       * 「アカウントIDとリージョンを new CdkStack() 時に明示的に設定」
+       * する必要がある。
+       * 
+       * もしアカウントIDを指定せず、暗黙的にIDを指定する形式（例えば実行時の profile オプションのみで動かす）
+       * ケースでは、下記のようなエラーが生じる。
+       * 
+       * ※リージョン未指定時も（確かめてはいないが）おそらく同じようなエラーが生じるはず。
+       * （ライブラリ側にそのようなエラーメッセージの出力メッセージがあるのを確認した。
+       * ただし、そもそものところ、クロスリージョン時には必ず親Stackのリージョンを明示する必要があるので、
+       * 状況的に起こり得ない可能性が高い）
+       * 
+       * ```
+       * Cannot generate a physical name for QuartzStack/quartzData-PublicBucket,
+       * because the account is un-resolved or missing.
+       * ```
+       */
       bucketName: PhysicalName.GENERATE_IF_NEEDED,
 
       removalPolicy: RemovalPolicy.RETAIN
@@ -158,23 +181,27 @@ export class CdkStack extends Stack {
     dynamoTable.grantReadWriteData(lambdaEdge);
     dynamoSession.grantReadWriteData(lambdaEdge);
     
-    dataBucket.grantReadWrite(lambdaEdge);
     /**
-     * dataBucket.grantReadWrite(lambdaEdge);
-     * って書きたいけどできない。
+     * 前述の「PhysicalName.GENERATE_IF_NEEDED」を利用せず、
+     * 単に bucketName: undefined とする形式でのバケット名自動生成を利用している場合に、
+     * `dataBucket.grantReadWrite(lambdaEdge)` のようなコードを実行すると
+     * 次のエラーが生じる。
      * 
-     * もし書くと次のようになる。
+     * ```
+     * Resolution error:
+     *   Cannot use resource 'QuartzStack/quartzData-PublicBucket'
+     *   in a cross-environment fashion,
+     *   the resource's physical name must be explicit set
+     *   or use `PhysicalName.GENERATE_IF_NEEDED`.
+     * ```
      * 
-     * エラー内容：
-     * Error: Resolution error:
-     *   Resolution error:
-     *     Resolution error:
-     *       Resolution error:
-     *         Cannot use resource 'QuartzStack/quartzData-PublicBucket'
-     *         in a cross-environment fashion,
-     *         the resource's physical name must be explicit set
-     *         or use `PhysicalName.GENERATE_IF_NEEDED`.
+     * なおGENERATE_IF_NEEDEDを使わずとも、文字列で明示的にバケット名を
+     * 定義している場合は、上記のエラーは生じない見込み。
+     * 
+     * (ただしS3バケットはグローバルで一意の名前をつけないといけないという制約がある)
      */
+    dataBucket.grantReadWrite(lambdaEdge);
+
 
     /**
      * 直書き用ARNが手に入るまでは下記2点のaddToResourcePolicyをコメントアウトしてデプロイすべき。
