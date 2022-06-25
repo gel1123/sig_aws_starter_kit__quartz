@@ -4,7 +4,7 @@ import { CdkStack } from '../lib/cdk-stack';
 
 /**
  * デプロイするときのコマンド例：
- * npm run build && cdk deploy --all --profile studying --require-approval never
+ * npm run build && cdk deploy --all --profile PROFILE_NAME --require-approval never
  * 
  * --allオプションについては後述。
  * --require-approvalオプションは、承認を必要とするかどうかを決める。
@@ -25,7 +25,7 @@ const app = new cdk.App();
  */ 
 new CdkStack(app, 'QuartzStack', {env: {
   // 実行時環境変数を使うならこう
-  // AWS_ACCOUNT=$(node -e "console.log($(aws sts get-caller-identity --profile studying).Account)") cdk deploy --all --profile studying --require-approval never
-  account: "904914921037",
+  // AWS_ACCOUNT=$(node -e "console.log($(aws sts get-caller-identity --profile PROFILE_NAME).Account)") cdk deploy --all --profile PROFILE_NAME --require-approval never
+  account: process.env.AWS_ACCOUNT,
   region: "ap-northeast-1"
 }});
