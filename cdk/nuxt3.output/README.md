@@ -17,7 +17,7 @@ rm -f nuxt3.output/server/index.mjs
 \cp -rf ../cch-nuxt3/.output/* nuxt3.output
 
 # build && deploy
-npm run build && cdk deploy --profile studying
+npm run build && cdk deploy --profile PROFILE_NAME
 ```
 
 
