@@ -45,8 +45,8 @@ async function handler(event, context, callback) {
   // Lambda@Edge用に応答形式を変換
   const res = await output.handler(e, context);
 
-  // console.info("[edge.mjs] event.Records[0].cf.request:", JSON.stringify(event.Records[0].cf.request));
-  // console.info("[edge.mjs] res.headers:", JSON.stringify(res.headers));
+  console.info("[edge.mjs] event.Records[0].cf.request:", JSON.stringify(event.Records[0].cf.request));
+  console.info("[edge.mjs] res.headers:", JSON.stringify(res.headers));
 
   const edgeRes = {
     status: res.statusCode,
