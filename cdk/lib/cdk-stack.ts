@@ -1,6 +1,6 @@
 import { UserPool } from 'aws-cdk-lib/aws-cognito';
 import { CfnOutput, Duration, PhysicalName, RemovalPolicy, Stack, StackProps } from "aws-cdk-lib";
-import { CloudFrontAllowedMethods, CloudFrontWebDistribution, experimental, LambdaEdgeEventType, OriginAccessIdentity, PriceClass } from "aws-cdk-lib/aws-cloudfront";
+import { AllowedMethods, CachePolicy, CloudFrontAllowedMethods, CloudFrontWebDistribution, Distribution, experimental, LambdaEdgeEventType, OriginAccessIdentity, OriginRequestCookieBehavior, OriginRequestPolicy, PriceClass, ViewerProtocolPolicy } from "aws-cdk-lib/aws-cloudfront";
 import { AttributeType, BillingMode, ProjectionType, Table } from "aws-cdk-lib/aws-dynamodb";
 // import { ArnPrincipal, Effect, PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { Code, Runtime } from "aws-cdk-lib/aws-lambda";
@@ -8,6 +8,7 @@ import { RetentionDays } from "aws-cdk-lib/aws-logs";
 import { Bucket } from "aws-cdk-lib/aws-s3";
 import { BucketDeployment, Source } from "aws-cdk-lib/aws-s3-deployment";
 import { Construct } from "constructs";
+import { S3Origin } from 'aws-cdk-lib/aws-cloudfront-origins';
 
 export class CdkStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -241,72 +242,119 @@ export class CdkStack extends Stack {
     // <--------CloudFront-------->
     // https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_cloudfront-readme.html
 
-    /**
-     * CloudFrontWebDistribution は 2022年2月時点の情報によると
-     * 近いうちに非推奨になるとのこと。
-     * そういった経緯により、Cookieまわりの新しい推奨オプションであるところの
-     * OriginRequestPolicyや、CachePolicyを用いた設定が実装されていない。
-     * 
-     * これに代わって推奨されるのは Distribution クラスとのこと。
-     * そちらでは上記Cookie周りのオプションが対応している。
-     */ 
-    const distribution = new CloudFrontWebDistribution(this, "quartzCdn", {
+    // /**
+    //  * CloudFrontWebDistribution は 2022年2月時点の情報によると
+    //  * 近いうちに非推奨になるとのこと。
+    //  * そういった経緯により、Cookieまわりの新しい推奨オプションであるところの
+    //  * OriginRequestPolicyや、CachePolicyを用いた設定が実装されていない。
+    //  * 
+    //  * これに代わって推奨されるのは Distribution クラスとのこと。
+    //  * そちらでは上記Cookie周りのオプションが対応している。
+    //  */ 
+    // const distribution = new CloudFrontWebDistribution(this, "quartzCdn", {
+    //   priceClass: PriceClass.PRICE_CLASS_200, // 価格クラス200以降は日本を含む
+    //   defaultRootObject: "", //<= defaultでは index.html になるが、不要なのであえて空文字にしておく
+    //   originConfigs: [
+    //     {
+    //       s3OriginSource: {
+    //         s3BucketSource: dataBucket,
+    //         originAccessIdentity: dataOai
+    //       },
+    //       behaviors: [
+    //         { // パターン的にこれが一番優先度高くなるよう定義しないと、ここに到達しないケースが生じる
+    //           isDefaultBehavior: false,
+    //           pathPattern: "/items/*",
+    //           defaultTtl: Duration.minutes(5), //安定したらもっと長くてもOK
+    //         }
+    //       ]
+    //     },
+    //     {
+    //       s3OriginSource: {
+    //         s3BucketSource: appBucket,
+    //         originAccessIdentity: appOai
+    //       },
+    //       behaviors: [
+    //         {
+    //           isDefaultBehavior: false,
+    //           pathPattern: "/*.*",
+    //           defaultTtl: Duration.seconds(240),
+    //           minTtl: Duration.seconds(120),
+    //           maxTtl: Duration.seconds(300),
+    //         },
+    //         {
+    //           isDefaultBehavior: true,
+    //           pathPattern: "*",
+    //           defaultTtl: Duration.seconds(20),
+    //           minTtl: Duration.seconds(10),
+    //           maxTtl: Duration.seconds(30),
+    //           lambdaFunctionAssociations: [
+    //             {
+    //               eventType: LambdaEdgeEventType.ORIGIN_REQUEST, //<= 当初ﾋﾞｭｰｱﾘｸｴｽﾄで定義していたが、Lambda@Edgeサイズ制限にひっかかったのでORIGIN_REQUESTに変更
+    //               lambdaFunction: lambdaEdge.currentVersion,
+    //               includeBody: true //<= これがないと下記でPOST受け入れてもリクエストボディが届かない
+    //             }
+    //           ],
+    //           allowedMethods: CloudFrontAllowedMethods.ALL, //<= Lambda@EdgeはデフォルトでPOST等受け入れないので、受け入れるようにする
+    //           forwardedValues: { // <= QueryStringも設定しないと受け入れないので、設定する
+    //             queryString: true,
+    //             cookies: {
+    //               // 非推奨オプションであり、 cache policy を使用すべき
+    //               forward: "all"
+    //             }
+    //           },    
+    //         },
+    //       ]
+    //     }
+    //   ],
+    // });
+    const dataBucketOrigin = new S3Origin(dataBucket, {
+      originAccessIdentity: dataOai,
+    });
+    const appBucketOrigin = new S3Origin(appBucket, {
+      originAccessIdentity: appOai,
+    });
+    const distribution = new Distribution(this, "quartzCdn", {
       priceClass: PriceClass.PRICE_CLASS_200, // 価格クラス200以降は日本を含む
       defaultRootObject: "", //<= defaultでは index.html になるが、不要なのであえて空文字にしておく
-      originConfigs: [
-        {
-          s3OriginSource: {
-            s3BucketSource: dataBucket,
-            originAccessIdentity: dataOai
-          },
-          behaviors: [
-            { // パターン的にこれが一番優先度高くなるよう定義しないと、ここに到達しないケースが生じる
-              isDefaultBehavior: false,
-              pathPattern: "/items/*",
-              defaultTtl: Duration.minutes(5), //安定したらもっと長くてもOK
-            }
-          ]
+      defaultBehavior: {
+        origin: appBucketOrigin,
+        allowedMethods: AllowedMethods.ALLOW_ALL, //<= Lambda@EdgeはデフォルトでPOST等受け入れないので、受け入れるようにする
+        viewerProtocolPolicy: ViewerProtocolPolicy.HTTPS_ONLY,
+        originRequestPolicy: new OriginRequestPolicy(this, "quartzORP", {
+          cookieBehavior: OriginRequestCookieBehavior.all()
+        }),
+        cachePolicy: new CachePolicy(this, "QuartzEdgeLambdaCachePolicy", {
+          minTtl: Duration.seconds(10),
+          defaultTtl: Duration.seconds(20),
+          maxTtl: Duration.seconds(30),
+        }),
+        edgeLambdas: [{
+          eventType: LambdaEdgeEventType.ORIGIN_REQUEST, //<= 当初ﾋﾞｭｰｱﾘｸｴｽﾄで定義していたが、Lambda@Edgeサイズ制限にひっかかったのでORIGIN_REQUESTに変更
+          functionVersion: lambdaEdge.currentVersion,
+          includeBody: true, //<= これがないと下記でPOST受け入れてもリクエストボディが届かない
+        }]
+      },
+      additionalBehaviors: {
+        "/items/*": {
+          // ブラウザから直接ダウンロードする画像などのファイル保管庫であり、
+          // 「更新」なしでの運用を行う前提で1ヵ月キャッシュする。
+          // ※削除後のキャッシュ残問題は、パスをDynamoDBから返さない運用とするため問題なし
+          origin: dataBucketOrigin,
+          cachePolicy: new CachePolicy(this, "QuartzDataBucketCachePolicy", {
+            defaultTtl: Duration.days(30),
+          }),
         },
-        {
-          s3OriginSource: {
-            s3BucketSource: appBucket,
-            originAccessIdentity: appOai
-          },
-          behaviors: [
-            {
-              isDefaultBehavior: false,
-              pathPattern: "/*.*",
-              defaultTtl: Duration.seconds(240),
-              minTtl: Duration.seconds(120),
-              maxTtl: Duration.seconds(300),
-            },
-            {
-              isDefaultBehavior: true,
-              pathPattern: "*",
-              defaultTtl: Duration.seconds(20),
-              minTtl: Duration.seconds(10),
-              maxTtl: Duration.seconds(30),
-              lambdaFunctionAssociations: [
-                {
-                  eventType: LambdaEdgeEventType.ORIGIN_REQUEST, //<= 当初ﾋﾞｭｰｱﾘｸｴｽﾄで定義していたが、Lambda@Edgeサイズ制限にひっかかったのでORIGIN_REQUESTに変更
-                  lambdaFunction: lambdaEdge.currentVersion,
-                  includeBody: true //<= これがないと下記でPOST受け入れてもリクエストボディが届かない
-                }
-              ],
-              allowedMethods: CloudFrontAllowedMethods.ALL, //<= Lambda@EdgeはデフォルトでPOST等受け入れないので、受け入れるようにする
-              forwardedValues: { // <= QueryStringも設定しないと受け入れないので、設定する
-                queryString: true,
-                cookies: {
-                  // 非推奨オプションであり、 cache policy を使用すべき
-                  forward: "all"
-                }
-              },
-              
-            },
-          ]
-        }
-      ],
+        "/*.*": {
+          origin: appBucketOrigin,
+          cachePolicy: new CachePolicy(this, "QuartzAppBucketCachePolicy", {
+            minTtl: Duration.minutes(2),
+            defaultTtl: Duration.minutes(4),
+            maxTtl: Duration.minutes(5),
+          }),
+        },
+      },
     });
+
     new CfnOutput(this, "CF URL", {
       value: `https://${distribution.distributionDomainName}`
     });
