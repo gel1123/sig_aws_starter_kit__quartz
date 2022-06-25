@@ -23,4 +23,9 @@ const app = new cdk.App();
  * CCHの制作が進むにつれ、DynamoDBなどus-east-1ではなくap-northeast-1リージョンに作成したいものが
  * 増えたため、現在では ap-northeast-1 リージョンでクロスリージョンデプロイしている。
  */ 
-new CdkStack(app, 'QuartzStack', {env: {region: "ap-northeast-1"}});
+new CdkStack(app, 'QuartzStack', {env: {
+  // 実行時環境変数を使うならこう
+  // AWS_ACCOUNT=$(node -e "console.log($(aws sts get-caller-identity --profile studying).Account)") cdk deploy --all --profile studying --require-approval never
+  account: "904914921037",
+  region: "ap-northeast-1"
+}});

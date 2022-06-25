@@ -23,7 +23,9 @@ const fetch = async () => {
   <div>
     <Outline>
       <p>You have successfully logged in!</p>
-      <button class="mt-5 mb-10 p-4 bg-slate-400 hover:opacity-70 w-full rounded-lg shadow-md" @click="fetch">fetch</button>
+      <button class="mt-5 mb-10 p-4 bg-slate-400 hover:opacity-70 w-full rounded-lg shadow-md" @click="fetch">
+        fetch (POST)
+      </button>
       <div class="bg-slate-300 text-gray-700 p-5">
         <p class="mb-2 text-gray-400">fetched data is ...</p>
         <pre class="whitespace-pre-wrap">{{fetchedData}}</pre>

@@ -1,8 +1,8 @@
 import { UserPool } from 'aws-cdk-lib/aws-cognito';
-import { CfnOutput, Duration, RemovalPolicy, Stack, StackProps } from "aws-cdk-lib";
+import { CfnOutput, Duration, PhysicalName, RemovalPolicy, Stack, StackProps } from "aws-cdk-lib";
 import { CloudFrontAllowedMethods, CloudFrontWebDistribution, experimental, LambdaEdgeEventType, OriginAccessIdentity, PriceClass } from "aws-cdk-lib/aws-cloudfront";
 import { AttributeType, BillingMode, ProjectionType, Table } from "aws-cdk-lib/aws-dynamodb";
-import { ArnPrincipal, Effect, PolicyStatement } from "aws-cdk-lib/aws-iam";
+// import { ArnPrincipal, Effect, PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { Code, Runtime } from "aws-cdk-lib/aws-lambda";
 import { RetentionDays } from "aws-cdk-lib/aws-logs";
 import { Bucket } from "aws-cdk-lib/aws-s3";
@@ -73,6 +73,11 @@ export class CdkStack extends Stack {
     
     /** 一般公開ファイル用バケット */
     const dataBucket = new Bucket(this, "quartzData-PublicBucket", {
+
+      // Cannot generate a physical name for QuartzStack/quartzData-PublicBucket,
+      // because the account is un-resolved or missing.
+      bucketName: PhysicalName.GENERATE_IF_NEEDED,
+
       removalPolicy: RemovalPolicy.RETAIN
     });
     const dataOai = new OriginAccessIdentity(this, "quartzData-OAI");
@@ -142,7 +147,7 @@ export class CdkStack extends Stack {
      * ※ `Lambda@Edge`は us-east-1 リージョン限定（CloudFrontに紐づいているから）
      * 参考にさせていただいた記事：https://www.dkrk-blog.net/aws/lambda_edge_crossregion
      */
-    const lambdaEdge = new experimental.EdgeFunction(this, "quartzEdgeHandler", {
+    const lambdaEdge = new experimental.EdgeFunction(this, "quartzEdgeLambdaHandler", {
       runtime: Runtime.NODEJS_14_X,
       code: Code.fromAsset("./nuxt3.output/server"),
       handler: "edge.handler",
@@ -152,6 +157,24 @@ export class CdkStack extends Stack {
     });
     dynamoTable.grantReadWriteData(lambdaEdge);
     dynamoSession.grantReadWriteData(lambdaEdge);
+    
+    dataBucket.grantReadWrite(lambdaEdge);
+    /**
+     * dataBucket.grantReadWrite(lambdaEdge);
+     * って書きたいけどできない。
+     * 
+     * もし書くと次のようになる。
+     * 
+     * エラー内容：
+     * Error: Resolution error:
+     *   Resolution error:
+     *     Resolution error:
+     *       Resolution error:
+     *         Cannot use resource 'QuartzStack/quartzData-PublicBucket'
+     *         in a cross-environment fashion,
+     *         the resource's physical name must be explicit set
+     *         or use `PhysicalName.GENERATE_IF_NEEDED`.
+     */
 
     /**
      * 直書き用ARNが手に入るまでは下記2点のaddToResourcePolicyをコメントアウトしてデプロイすべき。
