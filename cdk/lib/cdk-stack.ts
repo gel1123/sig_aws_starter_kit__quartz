@@ -1,8 +1,8 @@
 import { UserPool } from 'aws-cdk-lib/aws-cognito';
 import { CfnOutput, Duration, PhysicalName, RemovalPolicy, Stack, StackProps } from "aws-cdk-lib";
-import { AllowedMethods, CachePolicy, CloudFrontAllowedMethods, CloudFrontWebDistribution, Distribution, experimental, LambdaEdgeEventType, OriginAccessIdentity, OriginRequestCookieBehavior, OriginRequestPolicy, PriceClass, ViewerProtocolPolicy } from "aws-cdk-lib/aws-cloudfront";
+import { AllowedMethods, CacheCookieBehavior, CacheHeaderBehavior, CachePolicy, CacheQueryStringBehavior, Distribution, experimental, LambdaEdgeEventType, OriginAccessIdentity, OriginRequestCookieBehavior, OriginRequestHeaderBehavior, OriginRequestPolicy, OriginRequestQueryStringBehavior, PriceClass, ViewerProtocolPolicy } from "aws-cdk-lib/aws-cloudfront";
 import { AttributeType, BillingMode, ProjectionType, Table } from "aws-cdk-lib/aws-dynamodb";
-import { ArnPrincipal, CanonicalUserPrincipal, Effect, PolicyStatement } from "aws-cdk-lib/aws-iam";
+import { ArnPrincipal, CanonicalUserPrincipal, PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { Code, Runtime } from "aws-cdk-lib/aws-lambda";
 import { RetentionDays } from "aws-cdk-lib/aws-logs";
 import { Bucket } from "aws-cdk-lib/aws-s3";
@@ -275,12 +275,17 @@ export class CdkStack extends Stack {
         allowedMethods: AllowedMethods.ALLOW_ALL, //<= Lambda@EdgeはデフォルトでPOST等受け入れないので、受け入れるようにする
         viewerProtocolPolicy: ViewerProtocolPolicy.HTTPS_ONLY,
         originRequestPolicy: new OriginRequestPolicy(this, "quartzORP", {
-          cookieBehavior: OriginRequestCookieBehavior.all()
+          headerBehavior: OriginRequestHeaderBehavior.all(),
+          cookieBehavior: OriginRequestCookieBehavior.all(),
+          queryStringBehavior: OriginRequestQueryStringBehavior.all(),
         }),
         cachePolicy: new CachePolicy(this, "QuartzEdgeLambdaCachePolicy", {
           minTtl: Duration.seconds(10),
           defaultTtl: Duration.seconds(20),
           maxTtl: Duration.seconds(30),
+          cookieBehavior: CacheCookieBehavior.all(),
+          headerBehavior: CacheHeaderBehavior.none(),
+          queryStringBehavior: CacheQueryStringBehavior.all()
         }),
         edgeLambdas: [{
           eventType: LambdaEdgeEventType.ORIGIN_REQUEST, //<= 当初ﾋﾞｭｰｱﾘｸｴｽﾄで定義していたが、Lambda@Edgeサイズ制限にひっかかったのでORIGIN_REQUESTに変更
