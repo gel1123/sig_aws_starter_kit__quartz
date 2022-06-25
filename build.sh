@@ -27,8 +27,9 @@ if ask_yes_no "これは Quartz をCDKでデプロイするためのビルドス
 
   # build nuxt app
   cd ./nuxt3
+  npm i
   cp .dev.env .env
-  yarn build
+  npm run build
   cp .local.env .env
   cd ../
   
