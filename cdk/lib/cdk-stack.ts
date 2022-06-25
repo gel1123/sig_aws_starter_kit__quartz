@@ -369,12 +369,12 @@ export class CdkStack extends Stack {
         callbackUrls: [
           'http://localhost:8000',
           'http://localhost:3000',
-          distribution.distributionDomainName, 
+          `https://${distribution.distributionDomainName}`,
         ],
         logoutUrls: [
           'http://localhost:8000',
           'http://localhost:3000',
-          distribution.distributionDomainName, 
+          `https://${distribution.distributionDomainName}`,
         ]
       }
     });
