@@ -134,6 +134,10 @@ export class CdkStack extends Stack {
     //     ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole")
     //   ]
     // });
+    const lambdaEdgeRole = new Role(this, "QuartzOperateS3Role", {
+      roleName: "quartzLambdaEdgeRole",
+      assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
+    });
 
     /**
      * Lambda@Edgeなら、EdgeFunctionインスタンスでないと、スタック全体のリージョンとの差異がある場合にエラーになる。
@@ -147,14 +151,11 @@ export class CdkStack extends Stack {
       logRetention: RetentionDays.ONE_MONTH,
       timeout: Duration.seconds(30),
       memorySize: 2048,
-      role: new Role(this, "QuartzOperateS3Role", {
-        roleName: "quartzLambdaEdgeRole",
-        assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
-        managedPolicies: [
-          ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole")
-        ]
-      }),
+      role: lambdaEdgeRole,
     });
+    lambdaEdge.role?.addManagedPolicy(
+      ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole")
+    );
     // LambdaEdgeに割り当てているロールにインラインポリシーを追加
     dynamoTable.grantReadWriteData(lambdaEdge);
     dynamoSession.grantReadWriteData(lambdaEdge);
