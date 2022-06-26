@@ -2,7 +2,7 @@ import { UserPool } from 'aws-cdk-lib/aws-cognito';
 import { CfnOutput, Duration, PhysicalName, RemovalPolicy, Stack, StackProps } from "aws-cdk-lib";
 import { AllowedMethods, CacheCookieBehavior, CacheHeaderBehavior, CachePolicy, CacheQueryStringBehavior, Distribution, experimental, LambdaEdgeEventType, OriginAccessIdentity, OriginRequestCookieBehavior, OriginRequestHeaderBehavior, OriginRequestPolicy, OriginRequestQueryStringBehavior, PriceClass, ViewerProtocolPolicy } from "aws-cdk-lib/aws-cloudfront";
 import { AttributeType, BillingMode, ProjectionType, Table } from "aws-cdk-lib/aws-dynamodb";
-import { ArnPrincipal, CanonicalUserPrincipal, PolicyStatement } from "aws-cdk-lib/aws-iam";
+import { ArnPrincipal, CanonicalUserPrincipal, ManagedPolicy, PolicyDocument, PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
 import { Code, Runtime } from "aws-cdk-lib/aws-lambda";
 import { RetentionDays } from "aws-cdk-lib/aws-logs";
 import { Bucket } from "aws-cdk-lib/aws-s3";
@@ -120,6 +120,21 @@ export class CdkStack extends Stack {
 
     // <--------Lambda-------->
     // https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_lambda-readme.html
+
+    /**
+     * 後述のS3バケットへの addToResourcePolicy() で LambdaEdge に割り当てたRoleのARNが
+     * 必要であり、EdgeFunctionの暗黙的なロール生成ケースでは、
+     * ARNをCDK deploy 実行時に取得できないので、
+     * このようにして明示的にロールを生成している。
+     */
+    const lambdaEdgeRole = new Role(this, "QuartzOperateS3Role", {
+      roleName: "quartzLambdaEdgeRole",
+      assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
+      managedPolicies: [
+        ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole")
+      ]
+    });
+
     /**
      * Lambda@Edgeなら、EdgeFunctionインスタンスでないと、スタック全体のリージョンとの差異がある場合にエラーになる。
      * ※ `Lambda@Edge`は us-east-1 リージョン限定（CloudFrontに紐づいているから）
@@ -131,8 +146,10 @@ export class CdkStack extends Stack {
       handler: "edge.handler",
       logRetention: RetentionDays.ONE_MONTH,
       timeout: Duration.seconds(30),
-      memorySize: 2048
+      memorySize: 2048,
+      role: lambdaEdgeRole,
     });
+    // LambdaEdgeに割り当てているロールにインラインポリシーを追加
     dynamoTable.grantReadWriteData(lambdaEdge);
     dynamoSession.grantReadWriteData(lambdaEdge);
     
@@ -181,16 +198,13 @@ export class CdkStack extends Stack {
     //     resources: [appBucket.bucketArn + "/*"]
     //   })
     // );
-    // dataBucket.addToResourcePolicy( //<= Lambda@EdgeのロールARNを取得したかったが、内包されたStackから参照できなかったのでARN直書き
-    //   new PolicyStatement({
-    //     effect: Effect.ALLOW,
-    //     actions: ["s3:GetObject", "s3:PutObject"],
-    //     principals: [new ArnPrincipal(
-    //       "arn:aws:iam::904914921037:role/edge-lambda-stack-c82cecc-quartzEdgeHandlerService-13RGGZK18DR81"
-    //     )],
-    //     resources: [dataBucket.bucketArn + "/*"]
-    //   })
-    // );
+    dataBucket.addToResourcePolicy(
+      new PolicyStatement({
+        actions: ["s3:GetObject", "s3:PutObject"],
+        principals: [new ArnPrincipal(lambdaEdgeRole.roleArn)],
+        resources: [dataBucket.bucketArn + "/*"]
+      })
+    );
     // </--------Lambda-------->
 
     // <--------CloudFront-------->
