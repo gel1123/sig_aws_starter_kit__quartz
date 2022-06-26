@@ -137,9 +137,6 @@ export class CdkStack extends Stack {
       memorySize: 2048,
       role: roleStack.lambdaEdgeRole,
     });
-    lambdaEdge.role?.addManagedPolicy(
-      ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole")
-    );
     // LambdaEdgeに割り当てているロールにインラインポリシーを追加
     dynamoTable.grantReadWriteData(lambdaEdge);
     dynamoSession.grantReadWriteData(lambdaEdge);
