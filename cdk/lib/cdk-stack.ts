@@ -127,13 +127,13 @@ export class CdkStack extends Stack {
      * ARNをCDK deploy 実行時に取得できないので、
      * このようにして明示的にロールを生成している。
      */
-    const lambdaEdgeRole = new Role(this, "QuartzOperateS3Role", {
-      roleName: "quartzLambdaEdgeRole",
-      assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
-      managedPolicies: [
-        ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole")
-      ]
-    });
+    // const lambdaEdgeRole = new Role(this, "QuartzOperateS3Role", {
+    //   roleName: "quartzLambdaEdgeRole",
+    //   assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
+    //   managedPolicies: [
+    //     ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole")
+    //   ]
+    // });
 
     /**
      * Lambda@Edgeなら、EdgeFunctionインスタンスでないと、スタック全体のリージョンとの差異がある場合にエラーになる。
@@ -147,7 +147,13 @@ export class CdkStack extends Stack {
       logRetention: RetentionDays.ONE_MONTH,
       timeout: Duration.seconds(30),
       memorySize: 2048,
-      role: lambdaEdgeRole,
+      role: new Role(this, "QuartzOperateS3Role", {
+        roleName: "quartzLambdaEdgeRole",
+        assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
+        managedPolicies: [
+          ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole")
+        ]
+      }),
     });
     // LambdaEdgeに割り当てているロールにインラインポリシーを追加
     dynamoTable.grantReadWriteData(lambdaEdge);
@@ -198,13 +204,14 @@ export class CdkStack extends Stack {
     //     resources: [appBucket.bucketArn + "/*"]
     //   })
     // );
-    dataBucket.addToResourcePolicy(
-      new PolicyStatement({
-        actions: ["s3:GetObject", "s3:PutObject"],
-        principals: [new ArnPrincipal(lambdaEdgeRole.roleArn)],
-        resources: [dataBucket.bucketArn + "/*"]
-      })
-    );
+    
+    // dataBucket.addToResourcePolicy(
+    //   new PolicyStatement({
+    //     actions: ["s3:GetObject", "s3:PutObject"],
+    //     principals: [new ArnPrincipal(lambdaEdgeRole.roleArn)],
+    //     resources: [dataBucket.bucketArn + "/*"]
+    //   })
+    // );
     // </--------Lambda-------->
 
     // <--------CloudFront-------->
