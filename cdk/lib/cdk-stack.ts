@@ -159,6 +159,11 @@ export class CdkStack extends Stack {
      * 定義している場合は、上記のエラーは生じない見込み。
      * 
      * (ただしS3バケットはグローバルで一意の名前をつけないといけないという制約がある)
+     * 
+     * ところで事前に明示的なロールを別スタックで用意できていたのなら、
+     * この時点でロールにS3へのポリシーが追加されるだけでなく、
+     * S3バケットポリシーにも、相応の適切なアクセス権限が付与されるので、
+     * 個別に addToResourcePolicy() を行う必要がない。
      */
     dataBucket.grantReadWrite(lambdaEdge);
 
@@ -174,26 +179,29 @@ export class CdkStack extends Stack {
      * _____________
      * 
      * 追記：
-     * もしかして過剰だった....? と思い一部をコメントアウト。
+     * アカウント明示＋PhysicalName.GENERATE_IF_NEEDED（S3バケット名）＋EdgeFunctionのロール別スタックで作成
+     * を行うことで、個別に addToResourcePolicy せずとも、前述の grantReadWrite() メソッドなどで、ロールだけでなく、
+     * バケットポリシーまで定義してくれる。
+     * （現状ではこれを実現できているのでコメントアウト）
      */
     // appBucket.addToResourcePolicy( //<= Lambda@EdgeのロールARNを取得したかったが、内包されたStackから参照できなかったのでARN直書き
     //   new PolicyStatement({
     //     effect: Effect.ALLOW,
     //     actions: ["s3:GetObject"],
     //     principals: [new ArnPrincipal(
-    //       "arn:aws:iam::904914921037:role/edge-lambda-stack-c82cecc-quartzEdgeHandlerService-13RGGZK18DR81"
+    //       "arn:aws:iam::xxxxxxxxxxxx:role/edge-lambda-stack-xxxxx-quartzEdgeHandlerService-xxxxxx"
     //     )],
     //     resources: [appBucket.bucketArn + "/*"]
     //   })
     // );
-    
-    dataBucket.addToResourcePolicy(
-      new PolicyStatement({
-        actions: ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
-        principals: [new ArnPrincipal(roleStack.lambdaEdgeRole.roleArn)],
-        resources: [dataBucket.bucketArn + "/*"]
-      })
-    );
+    // ロール別スタックならここでこう書いても正常に動作する（ただし前述の経緯によりそもそも不要）
+    // dataBucket.addToResourcePolicy(
+    //   new PolicyStatement({
+    //     actions: ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
+    //     principals: [new ArnPrincipal(roleStack.lambdaEdgeRole.roleArn)],
+    //     resources: [dataBucket.bucketArn + "/*"]
+    //   })
+    // );
     // </--------Lambda-------->
 
     // <--------CloudFront-------->
@@ -202,7 +210,8 @@ export class CdkStack extends Stack {
     // /**
     //  * CloudFrontWebDistribution は 2022年2月時点の情報によると
     //  * 近いうちに非推奨になるとのこと。
-    //  * そういった経緯により、Cookieまわりの新しい推奨オプションであるところの
+    //  * そういった経緯により、CloudFrontWebDistributionでは、
+    //  * Cookieまわりの新しい推奨オプションであるところの
     //  * OriginRequestPolicyや、CachePolicyを用いた設定が実装されていない。
     //  * 
     //  * これに代わって推奨されるのは Distribution クラスとのこと。
@@ -256,7 +265,7 @@ export class CdkStack extends Stack {
     //             queryString: true,
     //             cookies: {
     //               // 非推奨オプションであり、 cache policy を使用すべき
-    //               forward: "all"
+    //               forward: "all" // ただしキャッシュポリシーは、Distribution でないと使えない
     //             }
     //           },    
     //         },
