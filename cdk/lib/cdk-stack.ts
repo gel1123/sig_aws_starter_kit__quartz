@@ -2,17 +2,19 @@ import { UserPool } from 'aws-cdk-lib/aws-cognito';
 import { CfnOutput, Duration, PhysicalName, RemovalPolicy, Stack, StackProps } from "aws-cdk-lib";
 import { AllowedMethods, CacheCookieBehavior, CacheHeaderBehavior, CachePolicy, CacheQueryStringBehavior, Distribution, experimental, LambdaEdgeEventType, OriginAccessIdentity, OriginRequestCookieBehavior, OriginRequestHeaderBehavior, OriginRequestPolicy, OriginRequestQueryStringBehavior, PriceClass, ViewerProtocolPolicy } from "aws-cdk-lib/aws-cloudfront";
 import { AttributeType, BillingMode, ProjectionType, Table } from "aws-cdk-lib/aws-dynamodb";
-import { ArnPrincipal, CanonicalUserPrincipal, ManagedPolicy, PolicyDocument, PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
+import { ArnPrincipal, CanonicalUserPrincipal, ManagedPolicy, PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { Code, Runtime } from "aws-cdk-lib/aws-lambda";
 import { RetentionDays } from "aws-cdk-lib/aws-logs";
 import { Bucket } from "aws-cdk-lib/aws-s3";
 import { BucketDeployment, Source } from "aws-cdk-lib/aws-s3-deployment";
 import { Construct } from "constructs";
 import { S3Origin } from 'aws-cdk-lib/aws-cloudfront-origins';
+import { RoleStack } from './role-stack';
 
 export class CdkStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
+    const roleStack = new RoleStack(this, "quartzRoleStack");
     
     // <--------S3-------->
     // https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_s3-readme.html
@@ -122,24 +124,6 @@ export class CdkStack extends Stack {
     // https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_lambda-readme.html
 
     /**
-     * 後述のS3バケットへの addToResourcePolicy() で LambdaEdge に割り当てたRoleのARNが
-     * 必要であり、EdgeFunctionの暗黙的なロール生成ケースでは、
-     * ARNをCDK deploy 実行時に取得できないので、
-     * このようにして明示的にロールを生成している。
-     */
-    // const lambdaEdgeRole = new Role(this, "QuartzOperateS3Role", {
-    //   roleName: "quartzLambdaEdgeRole",
-    //   assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
-    //   managedPolicies: [
-    //     ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole")
-    //   ]
-    // });
-    const lambdaEdgeRole = new Role(this, "QuartzOperateS3Role", {
-      roleName: "quartzLambdaEdgeRole",
-      assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
-    });
-
-    /**
      * Lambda@Edgeなら、EdgeFunctionインスタンスでないと、スタック全体のリージョンとの差異がある場合にエラーになる。
      * ※ `Lambda@Edge`は us-east-1 リージョン限定（CloudFrontに紐づいているから）
      * 参考にさせていただいた記事：https://www.dkrk-blog.net/aws/lambda_edge_crossregion
@@ -151,7 +135,7 @@ export class CdkStack extends Stack {
       logRetention: RetentionDays.ONE_MONTH,
       timeout: Duration.seconds(30),
       memorySize: 2048,
-      role: lambdaEdgeRole,
+      role: roleStack.lambdaEdgeRole,
     });
     lambdaEdge.role?.addManagedPolicy(
       ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole")
@@ -206,13 +190,13 @@ export class CdkStack extends Stack {
     //   })
     // );
     
-    // dataBucket.addToResourcePolicy(
-    //   new PolicyStatement({
-    //     actions: ["s3:GetObject", "s3:PutObject"],
-    //     principals: [new ArnPrincipal(lambdaEdgeRole.roleArn)],
-    //     resources: [dataBucket.bucketArn + "/*"]
-    //   })
-    // );
+    dataBucket.addToResourcePolicy(
+      new PolicyStatement({
+        actions: ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
+        principals: [new ArnPrincipal(roleStack.lambdaEdgeRole.roleArn)],
+        resources: [dataBucket.bucketArn + "/*"]
+      })
+    );
     // </--------Lambda-------->
 
     // <--------CloudFront-------->
@@ -351,19 +335,6 @@ export class CdkStack extends Stack {
       ],
       resources: [`${dataBucket.bucketArn}/*`]
     }));
-
-    if (lambdaEdge.role?.roleArn) {
-      console.log("Lambda@Edgeの割り当てられたIAMロールのARNの取得に成功しました : ", lambdaEdge.role.roleArn);
-      dataBucket.addToResourcePolicy(new PolicyStatement({
-        actions: ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
-        principals: [
-          new ArnPrincipal(lambdaEdge.role.roleArn)
-        ],
-        resources: [`${dataBucket.bucketArn}/*`]
-      }));
-    } else {
-      console.log("Lambda@Edgeの割り当てられたIAMロールのARNの取得に失敗しました");
-    }
 
     new CfnOutput(this, "CF URL", {
       value: `https://${distribution.distributionDomainName}`
