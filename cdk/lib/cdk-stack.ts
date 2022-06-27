@@ -134,7 +134,7 @@ export class CdkStack extends Stack {
      * 参考にさせていただいた記事：https://www.dkrk-blog.net/aws/lambda_edge_crossregion
      */
     const lambdaEdge = new experimental.EdgeFunction(this, `${id}_EdgeFunc`, {
-      runtime: Runtime.NODEJS_14_X,
+      runtime: Runtime.NODEJS_16_X,
       code: Code.fromAsset("./nuxt3.output/server"),
       handler: "edge.handler",
       logRetention: RetentionDays.ONE_MONTH,
@@ -345,7 +345,7 @@ export class CdkStack extends Stack {
         ]
       }
     });
-    userPool.addDomain(`${id}_Domain`, {
+    const userPoolDomain = userPool.addDomain(`${id}_Domain`, {
       cognitoDomain: {
         domainPrefix: id.toLowerCase().replace(/[^a-zA-Z0-9]/g, "-"),
       },
@@ -354,31 +354,31 @@ export class CdkStack extends Stack {
 
     // <-------- Env for Nuxt3 -------->
     const AWS_REGION = this.region;
-    const DATA_TABLE = dynamoDataTable.tableName;
-    const SESSION_TABLE = dynamoSession.tableName;
-    const CLIENT_ID = userPoolClient.userPoolClientId;
-    const USER_POOL_ID = userPool.userPoolId;
-    const CLIENT_SECRET = "****************** (Get it from the management console.)";
-    const REDIRECT_URL = `https://${distribution.distributionDomainName}`;
-    const TOKEN_ENDPOINT = `${REDIRECT_URL}/oauth2/token`
-    const LOGIN_ENDPOINT = `${REDIRECT_URL}/login`
-    const LOGOUT_ENDPOINT = `${REDIRECT_URL}/logout`
+    const DYNAMO_DATA_TABLE = dynamoDataTable.tableName;
+    const DYNAMO_SESSION_TABLE = dynamoSession.tableName;
+    const S3_DATA_BUCKET = dataBucket.bucketName;
+    const COGNITO_USER_POOL_ID = userPool.userPoolId;
+    const COGNITO_CLIENT_ID = userPoolClient.userPoolClientId;
+    const COGNITO_CLIENT_SECRET = "****************** (Get it from the management console.)";
+    const COGNITO_REDIRECT_URL = `https://${distribution.distributionDomainName}`;
+    const COGNITO_TOKEN_ENDPOINT = `${userPoolDomain.baseUrl()}/oauth2/token`
+    const COGNITO_LOGIN_ENDPOINT = `${userPoolDomain.baseUrl()}/login`
+    const COGNITO_LOGOUT_ENDPOINT = `${userPoolDomain.baseUrl()}/logout`
 
     // Nuxt3に定義すべき環境変数を出力
     // 必要に応じてNuxt3の再ビルドとデプロイを行なう
-    new CfnOutput(this, `${id}_Nuxt3DotEnv`, {exportName: "Nuxt3DotEnv", value: `
-
-AWS_REGION=${AWS_REGION}
-DATA_TABLE=${DATA_TABLE}
-SESSION_TABLE=${SESSION_TABLE}
-CLIENT_ID=${CLIENT_ID}
-USER_POOL_ID=${USER_POOL_ID}
-CLIENT_SECRET=${CLIENT_SECRET}
-REDIRECT_URL=${REDIRECT_URL}
-TOKEN_ENDPOINT=${TOKEN_ENDPOINT}
-LOGIN_ENDPOINT=${LOGIN_ENDPOINT}
-LOGOUT_ENDPOINT=${LOGOUT_ENDPOINT}
-`});
+    // ※IDにアンダースコア使用不可なので、ハイフンで代替
+    new CfnOutput(this, `AWS-REGION`, {value: AWS_REGION});
+    new CfnOutput(this, `DYNAMO-DATA-TABLE`, {value: DYNAMO_DATA_TABLE});
+    new CfnOutput(this, `DYNAMO-SESSION-TABLE`, {value: DYNAMO_SESSION_TABLE});
+    new CfnOutput(this, `S3-DATA-BUCKET`, {value: S3_DATA_BUCKET});
+    new CfnOutput(this, `COGNITO-USER-POOL-ID`, {value: COGNITO_USER_POOL_ID});
+    new CfnOutput(this, `COGNITO-CLIENT-ID`, {value: COGNITO_CLIENT_ID});
+    new CfnOutput(this, `COGNITO-CLIENT-SECRET`, {value: COGNITO_CLIENT_SECRET});
+    new CfnOutput(this, `COGNITO-REDIRECT-URL`, {value: COGNITO_REDIRECT_URL});
+    new CfnOutput(this, `COGNITO-TOKEN-ENDPOINT`, {value: COGNITO_TOKEN_ENDPOINT});
+    new CfnOutput(this, `COGNITO-LOGIN-ENDPOINT`, {value: COGNITO_LOGIN_ENDPOINT});
+    new CfnOutput(this, `COGNITO-LOGOUT-ENDPOINT`, {value: COGNITO_LOGOUT_ENDPOINT});
     // </-------- Env for Nuxt3 -------->
   }
 }

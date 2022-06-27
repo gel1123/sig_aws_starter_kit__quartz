@@ -3,7 +3,7 @@ import { defineNuxtConfig } from 'nuxt'
 // https://v3.nuxtjs.org/api/configuration/nuxt.config
 export default defineNuxtConfig({
   nitro: {
-      preset: 'aws-lambda' //<= Nuxt3をLambdaアプリケーションとして構成する設定
+      preset: 'aws-lambda' // Nuxt3をLambdaとしてビルドする設定
   },
   typescript: {
       strict: true
@@ -11,20 +11,23 @@ export default defineNuxtConfig({
   privateRuntimeConfig: {
     isDev: process.env.NODE_ENV === 'development',
     region: process.env.AWS_REGION,
-    dataTable: process.env.DATA_TABLE,
-    sessionTable: process.env.SESSION_TABLE,
 
+    // ストア関連
+    dataTable: process.env.DYNAMO_DATA_TABLE,
+    sessionTable: process.env.DYNAMO_SESSION_TABLE,
+    bucket: process.env.S3_DATA_BUCKET,
+    
     // Cognito関連
-    clientId: process.env.CLIENT_ID,
-    userPoolId: process.env.USER_POOL_ID,
-    clientSecret: process.env.CLIENT_SECRET,
-    tokenEndpoint: process.env.TOKEN_ENDPOINT,
-    loginEndpoint: process.env.LOGIN_ENDPOINT,
-    logoutEndpoint: process.env.LOGOUT_ENDPOINT,
-    redirectUrl: process.env.REDIRECT_URL,
+    clientId: process.env.COGNITO_CLIENT_ID,
+    userPoolId: process.env.COGNITO_USER_POOL_ID,
+    clientSecret: process.env.COGNITO_CLIENT_SECRET,
+    tokenEndpoint: process.env.COGNITO_TOKEN_ENDPOINT,
+    loginEndpoint: process.env.COGNITO_LOGIN_ENDPOINT,
+    logoutEndpoint: process.env.COGNITO_LOGOUT_ENDPOINT,
+    redirectUrl: process.env.COGNITO_REDIRECT_URL,
   },
-  ssr: true, //<= ビルドモードの指定。trueなら SSR or SSG. falseなら SPA. デフォルトでtrue.
-  target: 'server', //<= ビルドモードの指定。'server'なら SSR. 'static'なら SSG or SPA. デフォルトで 'server'.
+  ssr: true, // ビルドモードの指定。trueなら SSR or SSG. falseなら SPA. デフォルトでtrue.
+  target: 'server', // ビルドモードの指定。'server'なら SSR. 'static'なら SSG or SPA. デフォルトで 'server'.
   css: [
     '@/assets/css/main.css',
   ],
