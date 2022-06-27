@@ -115,9 +115,10 @@ export class CdkStack extends Stack {
         type: AttributeType.STRING
       },
       billingMode: BillingMode.PAY_PER_REQUEST,
-      // セッションデータは削除されても問題ないので、あえてテーブル名を明示していない
-      // （テーブル名が明示されていなければ、デプロイ時のキー構成変更でエラーにならない）
-      // tableName: `${id}_SessionTable`,
+      // セッションデータは削除されても問題ないが、Lambda@Edgeとの都合上、クロスリージョンを要するリソースであり、
+      // かといって、S3のようにグローバルで一意な値を定義する必要があるわけでもないので、
+      // ここは素直にテーブル名を明示する（PhysicalName.GENERATE_IF_NEEDED を使うのも手だが、テーブル名がややこしくなるので回避）
+      tableName: `${id}_SessionTable`,
       removalPolicy: RemovalPolicy.DESTROY,
       pointInTimeRecovery: false,
       timeToLiveAttribute: "TTL",
