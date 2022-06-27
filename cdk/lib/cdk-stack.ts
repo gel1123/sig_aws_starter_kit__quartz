@@ -346,7 +346,7 @@ export class CdkStack extends Stack {
     });
     userPool.addDomain(`${id}_Domain`, {
       cognitoDomain: {
-        domainPrefix: id,
+        domainPrefix: id.toLowerCase().replace(/[^a-zA-Z0-9]/g, "-"),
       },
     });
     // </--------Cognito-------->
