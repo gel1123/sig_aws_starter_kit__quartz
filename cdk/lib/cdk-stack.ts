@@ -1,5 +1,5 @@
 import { UserPool } from 'aws-cdk-lib/aws-cognito';
-import { Duration, PhysicalName, RemovalPolicy, Stack, StackProps } from "aws-cdk-lib";
+import { Duration, PhysicalName, RemovalPolicy, Stack, StackProps, CfnOutput } from 'aws-cdk-lib';
 import { AllowedMethods, CacheCookieBehavior, CacheHeaderBehavior, CachePolicy, CacheQueryStringBehavior, Distribution, experimental, LambdaEdgeEventType, OriginAccessIdentity, OriginRequestCookieBehavior, OriginRequestHeaderBehavior, OriginRequestPolicy, OriginRequestQueryStringBehavior, PriceClass, ViewerProtocolPolicy } from "aws-cdk-lib/aws-cloudfront";
 import { AttributeType, BillingMode, ProjectionType, Table } from "aws-cdk-lib/aws-dynamodb";
 import { CanonicalUserPrincipal, PolicyStatement } from "aws-cdk-lib/aws-iam";
@@ -364,21 +364,19 @@ export class CdkStack extends Stack {
     const LOGIN_ENDPOINT = `${REDIRECT_URL}/login`
     const LOGOUT_ENDPOINT = `${REDIRECT_URL}/logout`
 
-    console.log(`
-## Nuxt3に定義すべき環境変数
-（必要に応じてNuxt3を再度ビルドし、デプロイしてください）
-
-AWS_REGION=${AWS_REGION}
-DATA_TABLE=${DATA_TABLE}
-SESSION_TABLE=${SESSION_TABLE}
-CLIENT_ID=${CLIENT_ID}
-USER_POOL_ID=${USER_POOL_ID}
-CLIENT_SECRET=${CLIENT_SECRET}
-REDIRECT_URL=${REDIRECT_URL}
-TOKEN_ENDPOINT=${TOKEN_ENDPOINT}
-LOGIN_ENDPOINT=${LOGIN_ENDPOINT}
-LOGOUT_ENDPOINT=${LOGOUT_ENDPOINT}
-    `);
+    new CfnOutput(this, "通知：", {
+      value: "---- Nuxt3に定義すべき環境変数を表示します。必要に応じてNuxt3の再ビルドとデプロイを行なってください ----"
+    });
+    new CfnOutput(this, "AWS_REGION", {value: AWS_REGION});
+    new CfnOutput(this, "DATA_TABLE", {value: DATA_TABLE});
+    new CfnOutput(this, "SESSION_TABLE", {value: SESSION_TABLE});
+    new CfnOutput(this, "CLIENT_ID", {value: CLIENT_ID});
+    new CfnOutput(this, "USER_POOL_ID", {value: USER_POOL_ID});
+    new CfnOutput(this, "CLIENT_SECRET", {value: CLIENT_SECRET});
+    new CfnOutput(this, "REDIRECT_URL", {value: REDIRECT_URL});
+    new CfnOutput(this, "TOKEN_ENDPOINT", {value: TOKEN_ENDPOINT});
+    new CfnOutput(this, "LOGIN_ENDPOINT", {value: LOGIN_ENDPOINT});
+    new CfnOutput(this, "LOGOUT_ENDPOINT", {value: LOGOUT_ENDPOINT});
     // </-------- Env for Nuxt3 -------->
   }
 }
