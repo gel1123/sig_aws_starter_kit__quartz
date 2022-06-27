@@ -1,8 +1,9 @@
-## 参考サイト
+## TailwindCSS導入にあたっての参考サイト
 * https://std9.jp/articles/01fq14pxsp4r6nbyzp2txj46ac
 
 ## .env
 `../build.sh` の都合上、下記を用意してください。
+
 - .local.env (ローカル環境で動作させたい時の環境設定)
 - .dev.env （AWS上で動作させたい時の環境設定）
 
@@ -14,6 +15,9 @@
 ```
 export AWS_PROFILE=profile_name
 ```
+
+あるいは .env に同様の環境変数名でプロファイル名を登録してもよい。
+
 だがここまでやっても下記のエラーが出る場合は、
 プロファイル名が当たっているかどうかなどを確認すること。
 
