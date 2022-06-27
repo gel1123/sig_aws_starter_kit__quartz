@@ -358,25 +358,27 @@ export class CdkStack extends Stack {
     const SESSION_TABLE = dynamoSession.tableName;
     const CLIENT_ID = userPoolClient.userPoolClientId;
     const USER_POOL_ID = userPool.userPoolId;
-    const CLIENT_SECRET = "マネジメントコンソールから取得してください";
+    const CLIENT_SECRET = "****************** (Get it from the management console.)";
     const REDIRECT_URL = `https://${distribution.distributionDomainName}`;
     const TOKEN_ENDPOINT = `${REDIRECT_URL}/oauth2/token`
     const LOGIN_ENDPOINT = `${REDIRECT_URL}/login`
     const LOGOUT_ENDPOINT = `${REDIRECT_URL}/logout`
 
-    new CfnOutput(this, "通知：", {
-      value: "---- Nuxt3に定義すべき環境変数を表示します。必要に応じてNuxt3の再ビルドとデプロイを行なってください ----"
-    });
-    new CfnOutput(this, `${id}_AWS_REGION`, {exportName: `AWS_REGION`, value: AWS_REGION});
-    new CfnOutput(this, `${id}_DATA_TABLE`, {exportName: `DATA_TABLE`, value: DATA_TABLE});
-    new CfnOutput(this, `${id}_SESSION_TABLE`, {exportName: `SESSION_TABLE`, value: SESSION_TABLE});
-    new CfnOutput(this, `${id}_CLIENT_ID`, {exportName: `CLIENT_ID`, value: CLIENT_ID});
-    new CfnOutput(this, `${id}_USER_POOL_ID`, {exportName: `USER_POOL_ID`, value: USER_POOL_ID});
-    new CfnOutput(this, `${id}_CLIENT_SECRET`, {exportName: `CLIENT_SECRET`, value: CLIENT_SECRET});
-    new CfnOutput(this, `${id}_REDIRECT_URL`, {exportName: `REDIRECT_URL`, value: REDIRECT_URL});
-    new CfnOutput(this, `${id}_TOKEN_ENDPOINT`, {exportName: `TOKEN_ENDPOINT`, value: TOKEN_ENDPOINT});
-    new CfnOutput(this, `${id}_LOGIN_ENDPOINT`, {exportName: `LOGIN_ENDPOINT`, value: LOGIN_ENDPOINT});
-    new CfnOutput(this, `${id}_LOGOUT_ENDPOINT`, {exportName: `LOGOUT_ENDPOINT`, value: LOGOUT_ENDPOINT});
+    // Nuxt3に定義すべき環境変数を出力
+    // 必要に応じてNuxt3の再ビルドとデプロイを行なう
+    new CfnOutput(this, `${id}_Nuxt3DotEnv`, {exportName: "Nuxt3DotEnv", value: `
+
+AWS_REGION=${AWS_REGION}
+DATA_TABLE=${DATA_TABLE}
+SESSION_TABLE=${SESSION_TABLE}
+CLIENT_ID=${CLIENT_ID}
+USER_POOL_ID=${USER_POOL_ID}
+CLIENT_SECRET=${CLIENT_SECRET}
+REDIRECT_URL=${REDIRECT_URL}
+TOKEN_ENDPOINT=${TOKEN_ENDPOINT}
+LOGIN_ENDPOINT=${LOGIN_ENDPOINT}
+LOGOUT_ENDPOINT=${LOGOUT_ENDPOINT}
+`});
     // </-------- Env for Nuxt3 -------->
   }
 }
