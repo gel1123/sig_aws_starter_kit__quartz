@@ -3,6 +3,23 @@ import * as cdk from 'aws-cdk-lib';
 import { CdkStack } from '../lib/cdk-stack';
 import 'dotenv/config'
 
+if (!process.env.AWS_ACCOUNT) {
+  console.error(
+    ".envファイルに、環境変数 AWS_ACCOUNT を定義して、デプロイ先のAWSアカウントIDを設定してください。\n"
+    + "なお、下記のコマンドでAWSアカウントIDを確認できます。（PROFILE_NAMEに利用するプロファイル名を入力してください）\n"
+    + "aws sts get-caller-identity --profile PROFILE_NAME"
+  )
+  throw Error("must set process.env.AWS_ACCOUNT");
+}
+
+if (!process.env.DEPLOY_MODE) {
+  console.warn(
+    ".envファイルに、環境変数 DEPLOY_MODE が定義されていません。\n"
+    + "開発環境へのデプロイとみなし、デプロイを実行します。"
+    + "（なお、商用環境へのデプロイを行う場合には、 DEPLOY_MODE=production を指定してください）"
+  );
+}
+
 /**
  * デプロイするときのコマンド例：
  * npm run build && cdk deploy --all --profile PROFILE_NAME --require-approval never
@@ -13,18 +30,12 @@ import 'dotenv/config'
  */
 const app = new cdk.App();
 
-/**
- * `Lambda@Edge` を含むスタックをデプロイするときには、
- * スタックとしてのリージョンを明示する必要がある。
- * 
- * なおus-east-1以外のリージョンでデプロイするなら --all オプション付きデプロイが必要。
- * （Lambda@Edgeのインスタンスが内部でus-east-1のクロスリージョンスタックを生成した上でデプロイされるから）。
- * 
- * 初期は us-east-1 リージョンでまとめて全部デプロイしていたが、
- * CCHの制作が進むにつれ、DynamoDBなどus-east-1ではなくap-northeast-1リージョンに作成したいものが
- * 増えたため、現在では ap-northeast-1 リージョンでクロスリージョンデプロイしている。
- */ 
-new CdkStack(app, 'QuartzStack', {env: {
+const projectCodeName = "QUARTZ";
+const stackId = `${projectCodeName}-${
+  process.env.DEPLOY_MODE === "production" ?
+  "PROD" : "DEV"
+}`;
+new CdkStack(app, stackId, {env: {
 
   /**
    * aws sts get-caller-identity --profile PROFILE_NAME でアカウントIDを取得できる
@@ -37,5 +48,12 @@ new CdkStack(app, 'QuartzStack', {env: {
    */
   account: process.env.AWS_ACCOUNT,
 
+  /**
+   * `Lambda@Edge` を含むスタックをデプロイするときには、
+   * スタックとしてのリージョンを明示する必要がある。
+   * 
+   * なおus-east-1以外のリージョンでデプロイするなら --all オプション付きデプロイが必要。
+   * （Lambda@Edgeのインスタンスが内部でus-east-1のクロスリージョンスタックを生成した上でデプロイされるから）。
+   */ 
   region: "ap-northeast-1"
 }});

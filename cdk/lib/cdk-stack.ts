@@ -1,8 +1,8 @@
 import { UserPool } from 'aws-cdk-lib/aws-cognito';
-import { CfnOutput, Duration, PhysicalName, RemovalPolicy, Stack, StackProps } from "aws-cdk-lib";
+import { Duration, PhysicalName, RemovalPolicy, Stack, StackProps } from "aws-cdk-lib";
 import { AllowedMethods, CacheCookieBehavior, CacheHeaderBehavior, CachePolicy, CacheQueryStringBehavior, Distribution, experimental, LambdaEdgeEventType, OriginAccessIdentity, OriginRequestCookieBehavior, OriginRequestHeaderBehavior, OriginRequestPolicy, OriginRequestQueryStringBehavior, PriceClass, ViewerProtocolPolicy } from "aws-cdk-lib/aws-cloudfront";
 import { AttributeType, BillingMode, ProjectionType, Table } from "aws-cdk-lib/aws-dynamodb";
-import { ArnPrincipal, CanonicalUserPrincipal, ManagedPolicy, PolicyStatement } from "aws-cdk-lib/aws-iam";
+import { CanonicalUserPrincipal, PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { Code, Runtime } from "aws-cdk-lib/aws-lambda";
 import { RetentionDays } from "aws-cdk-lib/aws-logs";
 import { Bucket } from "aws-cdk-lib/aws-s3";
@@ -14,24 +14,24 @@ import { RoleStack } from './role-stack';
 export class CdkStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
-    const roleStack = new RoleStack(this, "quartzRoleStack");
+    const roleStack = new RoleStack(this, `${id}_RoleSubStack`);
     
     // <--------S3-------->
     // https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_s3-readme.html
 
     /** Nuxt3 Application 静的ファイル用バケット */
-    const appBucket = new Bucket(this, "quartzNuxt3App-PublicBucket", {
+    const appBucket = new Bucket(this, `${id}_Nuxt3AppBucket`, {
       removalPolicy: RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
     });
-    const appOai = new OriginAccessIdentity(this, "quartzNuxt3App-OAI");
-    new BucketDeployment(this, "quartzNuxt3App-PublicBucket-Deployment", {
+    const appOai = new OriginAccessIdentity(this, `${id}_Nuxt3AppBucketOAI`);
+    new BucketDeployment(this, `${id}_Nuxt3AppBucketDeployment`, {
       sources: [Source.asset("./nuxt3.output/public")],
       destinationBucket: appBucket
     });
     
     /** 一般公開ファイル用バケット */
-    const dataBucket = new Bucket(this, "quartzData-PublicBucket", {
+    const dataBucket = new Bucket(this, `${id}_DataBucket`, {
 
       /**
        * PhysicalName.GENERATE_IF_NEEDED は 内部でus-east1リージョンの子Stackを
@@ -54,7 +54,7 @@ export class CdkStack extends Stack {
        * 状況的に起こり得ない可能性が高い）
        * 
        * ```
-       * Cannot generate a physical name for QuartzStack/quartzData-PublicBucket,
+       * Cannot generate a physical name for XXXStack/XXXBucket,
        * because the account is un-resolved or missing.
        * ```
        */
@@ -62,12 +62,12 @@ export class CdkStack extends Stack {
 
       removalPolicy: RemovalPolicy.RETAIN
     });
-    const dataOai = new OriginAccessIdentity(this, "quartzData-OAI");
+    const dataOai = new OriginAccessIdentity(this, `${id}_DataBucketOAI`);
     // </--------S3-------->
 
     // <--------DynamoDB-------->
     // https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_dynamodb-readme.html
-    const dynamoTable = new Table(this, "QuartzTable", {
+    const dynamoDataTable = new Table(this, `${id}_DataTable`, {
       partitionKey: {
         name: "PK",
         type: AttributeType.STRING
@@ -77,43 +77,47 @@ export class CdkStack extends Stack {
         type: AttributeType.STRING
       },
       billingMode: BillingMode.PAY_PER_REQUEST,
-      tableName: "QUARTZ_TABLE",
+      // テーブル名を明示するのはベストプラクティスから外れるが、誤ってデプロイ時に既存レコードを全て削除しないよう、あえて明示している
+      // （テーブル名が明示されていれば、テーブル構成変更時には、テーブル名重複エラーにより、デプロイに失敗させられるため）
+      tableName: `${id}_DataTable`,
       removalPolicy: RemovalPolicy.RETAIN,
       pointInTimeRecovery: false
     });
-    dynamoTable.addLocalSecondaryIndex({
-      indexName: "QUARTZ_LSI_1",
+    dynamoDataTable.addLocalSecondaryIndex({
+      indexName: `${id}_LSI_1`,
       sortKey: { name: "LSI_1", type: AttributeType.STRING },
       projectionType: ProjectionType.ALL
     });
-    dynamoTable.addLocalSecondaryIndex({
-      indexName: "QUARTZ_LSI_2",
+    dynamoDataTable.addLocalSecondaryIndex({
+      indexName: `${id}_LSI_2`,
       sortKey: { name: "LSI_2", type: AttributeType.STRING },
       projectionType: ProjectionType.ALL
     });
-    dynamoTable.addLocalSecondaryIndex({
-      indexName: "QUARTZ_LSI_3",
+    dynamoDataTable.addLocalSecondaryIndex({
+      indexName: `${id}_LSI_3`,
       sortKey: { name: "LSI_3", type: AttributeType.STRING },
       projectionType: ProjectionType.ALL
     });
-    dynamoTable.addLocalSecondaryIndex({
-      indexName: "QUARTZ_LSI_4",
+    dynamoDataTable.addLocalSecondaryIndex({
+      indexName: `${id}_LSI_4`,
       sortKey: { name: "LSI_4", type: AttributeType.STRING },
       projectionType: ProjectionType.ALL
     });
-    dynamoTable.addLocalSecondaryIndex({
-      indexName: "QUARTZ_LSI_5",
+    dynamoDataTable.addLocalSecondaryIndex({
+      indexName: `${id}_LSI_5`,
       sortKey: { name: "LSI_5", type: AttributeType.STRING },
       projectionType: ProjectionType.ALL
     });
 
-    const dynamoSession = new Table(this, "QuartzSession", {
+    const dynamoSession = new Table(this, `${id}_SessionTable`, {
       partitionKey: {
         name: "PK",
         type: AttributeType.STRING
       },
       billingMode: BillingMode.PAY_PER_REQUEST,
-      tableName: "QUARTZ_SESSION",
+      // セッションデータは削除されても問題ないので、あえてテーブル名を明示していない
+      // （テーブル名が明示されていなければ、デプロイ時のキー構成変更でエラーにならない）
+      // tableName: `${id}_SessionTable`,
       removalPolicy: RemovalPolicy.DESTROY,
       pointInTimeRecovery: false,
       timeToLiveAttribute: "TTL",
@@ -128,7 +132,7 @@ export class CdkStack extends Stack {
      * ※ `Lambda@Edge`は us-east-1 リージョン限定（CloudFrontに紐づいているから）
      * 参考にさせていただいた記事：https://www.dkrk-blog.net/aws/lambda_edge_crossregion
      */
-    const lambdaEdge = new experimental.EdgeFunction(this, "quartzEdgeLambdaHandler", {
+    const lambdaEdge = new experimental.EdgeFunction(this, `${id}_EdgeFunc`, {
       runtime: Runtime.NODEJS_14_X,
       code: Code.fromAsset("./nuxt3.output/server"),
       handler: "edge.handler",
@@ -138,7 +142,7 @@ export class CdkStack extends Stack {
       role: roleStack.lambdaEdgeRole,
     });
     // LambdaEdgeに割り当てているロールにインラインポリシーを追加
-    dynamoTable.grantReadWriteData(lambdaEdge);
+    dynamoDataTable.grantReadWriteData(lambdaEdge);
     dynamoSession.grantReadWriteData(lambdaEdge);
     
     /**
@@ -149,7 +153,7 @@ export class CdkStack extends Stack {
      * 
      * ```
      * Resolution error:
-     *   Cannot use resource 'QuartzStack/quartzData-PublicBucket'
+     *   Cannot use resource 'XXXStack/XXXBucket'
      *   in a cross-environment fashion,
      *   the resource's physical name must be explicit set
      *   or use `PhysicalName.GENERATE_IF_NEEDED`.
@@ -160,48 +164,11 @@ export class CdkStack extends Stack {
      * 
      * (ただしS3バケットはグローバルで一意の名前をつけないといけないという制約がある)
      * 
-     * ところで事前に明示的なロールを別スタックで用意できていたのなら、
-     * この時点でロールにS3へのポリシーが追加されるだけでなく、
-     * S3バケットポリシーにも、相応の適切なアクセス権限が付与されるので、
-     * 個別に addToResourcePolicy() を行う必要がない。
+     * ところで事前に明示的なロールを別スタックで用意していれば、
+     * この時点で、S3バケットポリシーにも相応の適切なアクセス権限が付与される（ロールだけではなく）。
+     * そのため、後で個別に addToResourcePolicy() を行う必要がない。
      */
     dataBucket.grantReadWrite(lambdaEdge);
-
-
-    /**
-     * 直書き用ARNが手に入るまでは下記2点のaddToResourcePolicyをコメントアウトしてデプロイすべき。
-     * なお、ここで必要としているARNは `Lambda@Edge` としてCloudFrontのビヘイビアに紐づいているLambdaのARNではなく、
-     * そのLambdaに割り当てられているロールのARNである。
-     * 
-     * これは管理コンソールの us-east-1のLambdaの「アクセス権限」メニューからロールのページに飛び、
-     * そこで参照することができる。
-     * 
-     * _____________
-     * 
-     * 追記：
-     * アカウント明示＋PhysicalName.GENERATE_IF_NEEDED（S3バケット名）＋EdgeFunctionのロール別スタックで作成
-     * を行うことで、個別に addToResourcePolicy せずとも、前述の grantReadWrite() メソッドなどで、ロールだけでなく、
-     * バケットポリシーまで定義してくれる。
-     * （現状ではこれを実現できているのでコメントアウト）
-     */
-    // appBucket.addToResourcePolicy( //<= Lambda@EdgeのロールARNを取得したかったが、内包されたStackから参照できなかったのでARN直書き
-    //   new PolicyStatement({
-    //     effect: Effect.ALLOW,
-    //     actions: ["s3:GetObject"],
-    //     principals: [new ArnPrincipal(
-    //       "arn:aws:iam::xxxxxxxxxxxx:role/edge-lambda-stack-xxxxx-quartzEdgeHandlerService-xxxxxx"
-    //     )],
-    //     resources: [appBucket.bucketArn + "/*"]
-    //   })
-    // );
-    // ロール別スタックならここでこう書いても正常に動作する（ただし前述の経緯によりそもそも不要）
-    // dataBucket.addToResourcePolicy(
-    //   new PolicyStatement({
-    //     actions: ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
-    //     principals: [new ArnPrincipal(roleStack.lambdaEdgeRole.roleArn)],
-    //     resources: [dataBucket.bucketArn + "/*"]
-    //   })
-    // );
     // </--------Lambda-------->
 
     // <--------CloudFront-------->
@@ -217,7 +184,7 @@ export class CdkStack extends Stack {
     //  * これに代わって推奨されるのは Distribution クラスとのこと。
     //  * そちらでは上記Cookie周りのオプションが対応している。
     //  */ 
-    // const distribution = new CloudFrontWebDistribution(this, "quartzCdn", {
+    // const distribution = new CloudFrontWebDistribution(this, `${id}_CDN`, {
     //   priceClass: PriceClass.PRICE_CLASS_200, // 価格クラス200以降は日本を含む
     //   defaultRootObject: "", //<= defaultでは index.html になるが、不要なのであえて空文字にしておく
     //   originConfigs: [
@@ -273,25 +240,26 @@ export class CdkStack extends Stack {
     //     }
     //   ],
     // });
+
     const dataBucketOrigin = new S3Origin(dataBucket, {
       originAccessIdentity: dataOai,
     });
     const appBucketOrigin = new S3Origin(appBucket, {
       originAccessIdentity: appOai,
     });
-    const distribution = new Distribution(this, "quartzCdn", {
+    const distribution = new Distribution(this, `${id}_CDN`, {
       priceClass: PriceClass.PRICE_CLASS_200, // 価格クラス200以降は日本を含む
       defaultRootObject: "", //<= defaultでは index.html になるが、不要なのであえて空文字にしておく
       defaultBehavior: {
         origin: appBucketOrigin,
         allowedMethods: AllowedMethods.ALLOW_ALL, //<= Lambda@EdgeはデフォルトでPOST等受け入れないので、受け入れるようにする
         viewerProtocolPolicy: ViewerProtocolPolicy.HTTPS_ONLY,
-        originRequestPolicy: new OriginRequestPolicy(this, "quartzORP", {
+        originRequestPolicy: new OriginRequestPolicy(this, `${id}_DefaultBehaviorRequestPolicy`, {
           headerBehavior: OriginRequestHeaderBehavior.all(),
           cookieBehavior: OriginRequestCookieBehavior.all(),
           queryStringBehavior: OriginRequestQueryStringBehavior.all(),
         }),
-        cachePolicy: new CachePolicy(this, "QuartzEdgeLambdaCachePolicy", {
+        cachePolicy: new CachePolicy(this, `${id}_DefaultBehaviorCachePolicy`, {
           minTtl: Duration.seconds(10),
           defaultTtl: Duration.seconds(20),
           maxTtl: Duration.seconds(30),
@@ -311,13 +279,13 @@ export class CdkStack extends Stack {
           // 「更新」なしでの運用を行う前提で1ヵ月キャッシュする。
           // ※削除後のキャッシュ残問題は、パスをDynamoDBから返さない運用とするため問題なし
           origin: dataBucketOrigin,
-          cachePolicy: new CachePolicy(this, "QuartzDataBucketCachePolicy", {
+          cachePolicy: new CachePolicy(this, `${id}_DataBucketCachePolicy`, {
             defaultTtl: Duration.days(30),
           }),
         },
         "/*.*": {
           origin: appBucketOrigin,
-          cachePolicy: new CachePolicy(this, "QuartzNuxt3AppBucketCachePolicy", {
+          cachePolicy: new CachePolicy(this, `${id}_Nuxt3AppBucketCachePolicy`, {
             minTtl: Duration.minutes(2),
             defaultTtl: Duration.minutes(4),
             maxTtl: Duration.minutes(5),
@@ -341,16 +309,11 @@ export class CdkStack extends Stack {
       ],
       resources: [`${dataBucket.bucketArn}/*`]
     }));
-
-    new CfnOutput(this, "CF URL", {
-      value: `https://${distribution.distributionDomainName}`
-    });
     // </--------CloudFront-------->
 
     // <--------Cognito-------->
     // https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_cognito-readme.html
-    const userPool = new UserPool(this, 'quartz_userpool', {
-      userPoolName: 'quartz_app-userpool',
+    const userPool = new UserPool(this, `${id}_UserPool`, {
       signInAliases: {
         username: true,
         email: true,
@@ -359,8 +322,7 @@ export class CdkStack extends Stack {
         email: true,
       },
     });
-    userPool.addClient('quartz_app-userpool-client', {
-      userPoolClientName: 'quartz_app-userpool-client',
+    const userPoolClient = userPool.addClient(`${id}_app-userpool-client`, {
       generateSecret: true,
       accessTokenValidity: Duration.hours(1),
       idTokenValidity: Duration.hours(1),
@@ -382,11 +344,40 @@ export class CdkStack extends Stack {
         ]
       }
     });
-    userPool.addDomain('quartz_app-userpool-domain', {
+    userPool.addDomain(`${id}_Domain`, {
       cognitoDomain: {
-        domainPrefix: 'quartz',
+        domainPrefix: id,
       },
     });
     // </--------Cognito-------->
+
+    // <-------- Env for Nuxt3 -------->
+    const AWS_REGION = this.region;
+    const DATA_TABLE = dynamoDataTable.tableName;
+    const SESSION_TABLE = dynamoSession.tableName;
+    const CLIENT_ID = userPoolClient.userPoolClientId;
+    const USER_POOL_ID = userPool.userPoolId;
+    const CLIENT_SECRET = "マネジメントコンソールから取得してください";
+    const REDIRECT_URL = `https://${distribution.distributionDomainName}`;
+    const TOKEN_ENDPOINT = `${REDIRECT_URL}/oauth2/token`
+    const LOGIN_ENDPOINT = `${REDIRECT_URL}/login`
+    const LOGOUT_ENDPOINT = `${REDIRECT_URL}/logout`
+
+    console.log(`
+## Nuxt3に定義すべき環境変数
+（必要に応じてNuxt3を再度ビルドし、デプロイしてください）
+
+AWS_REGION=${AWS_REGION}
+DATA_TABLE=${DATA_TABLE}
+SESSION_TABLE=${SESSION_TABLE}
+CLIENT_ID=${CLIENT_ID}
+USER_POOL_ID=${USER_POOL_ID}
+CLIENT_SECRET=${CLIENT_SECRET}
+REDIRECT_URL=${REDIRECT_URL}
+TOKEN_ENDPOINT=${TOKEN_ENDPOINT}
+LOGIN_ENDPOINT=${LOGIN_ENDPOINT}
+LOGOUT_ENDPOINT=${LOGOUT_ENDPOINT}
+    `);
+    // </-------- Env for Nuxt3 -------->
   }
 }
