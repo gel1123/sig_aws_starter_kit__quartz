@@ -40,16 +40,30 @@ export default defineEventHandler(async (event) => {
   });
   // SESSION_TABLE にトランザクションIDをキーとして、OKCEのcode_challengeを保存する
   const DDC = getDynamoDBDocumentClient({region: config.region});
-  const result = await DDC.send(new PutCommand({
-    TableName: config.sessionTable,
-    Item: {
-      PK: transactionId,
-      code_verifier,
-      state,
-      // TTL属性の値は、Unix エポック時間形式のタイムスタンプ (秒単位) であり、ここでは5分後になるように設定している
-      TTL: Math.floor(Date.now() / 1000) + 300,
-    },
-  }));
+  const result = await (async () => {
+    try {
+      const _result = await DDC.send(new PutCommand({
+        TableName: config.sessionTable,
+        Item: {
+          PK: transactionId,
+          code_verifier,
+          state,
+          // TTL属性の値は、Unix エポック時間形式のタイムスタンプ (秒単位) であり、ここでは5分後になるように設定している
+          TTL: Math.floor(Date.now() / 1000) + 300,
+        },
+      })); 
+      return _result;
+    } catch (e) {
+      if (config.isDev && (e as unknown as Error)?.name === "UnrecognizedClientException") {
+        // ローカルでの動作確認時には、AWSのアクセスキー設定し忘れでここに到達する可能性がある
+        console.warn(
+          "AWSのAccessKeyもしくはSecretAccessKeyが設定されていません。\n"
+          + "aws configureコマンドでの設定をするか、profile名を 環境変数AWS_PROFILE にセットしてください。"
+        )
+      }
+      throw e;
+    }
+  })();
 
   if (result.$metadata.httpStatusCode !== 200) {
     event.res.writeHead(result.$metadata.httpStatusCode ?? 500, {"Content-Type": "text/plain"});
