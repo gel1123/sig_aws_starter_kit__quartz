@@ -250,7 +250,6 @@ export class CdkStack extends Stack {
     });
     const distribution = new Distribution(this, `${id}_CDN`, {
       priceClass: PriceClass.PRICE_CLASS_200, // 価格クラス200以降は日本を含む
-      defaultRootObject: "", //<= defaultでは index.html になるが、不要なのであえて空文字にしておく
       defaultBehavior: {
         origin: appBucketOrigin,
         allowedMethods: AllowedMethods.ALLOW_ALL, //<= Lambda@EdgeはデフォルトでPOST等受け入れないので、受け入れるようにする
