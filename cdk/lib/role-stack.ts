@@ -25,6 +25,8 @@ export class RoleStack extends Stack {
      * メインスタックを生成している。
      */
     const lambdaEdgeRole = new Role(this, `${id}_OperateS3Role`, {
+      // Lambda@Edgeとの関係上、明示するか PhysicalName.GENERATE_IF_NEEDED を指定するかのどちらかが必要
+      roleName: `${id}_OperateS3Role`,
       assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
       managedPolicies: [
         ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole")
