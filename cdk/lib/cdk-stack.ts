@@ -367,16 +367,16 @@ export class CdkStack extends Stack {
     new CfnOutput(this, "通知：", {
       value: "---- Nuxt3に定義すべき環境変数を表示します。必要に応じてNuxt3の再ビルドとデプロイを行なってください ----"
     });
-    new CfnOutput(this, "AWS_REGION", {value: AWS_REGION});
-    new CfnOutput(this, "DATA_TABLE", {value: DATA_TABLE});
-    new CfnOutput(this, "SESSION_TABLE", {value: SESSION_TABLE});
-    new CfnOutput(this, "CLIENT_ID", {value: CLIENT_ID});
-    new CfnOutput(this, "USER_POOL_ID", {value: USER_POOL_ID});
-    new CfnOutput(this, "CLIENT_SECRET", {value: CLIENT_SECRET});
-    new CfnOutput(this, "REDIRECT_URL", {value: REDIRECT_URL});
-    new CfnOutput(this, "TOKEN_ENDPOINT", {value: TOKEN_ENDPOINT});
-    new CfnOutput(this, "LOGIN_ENDPOINT", {value: LOGIN_ENDPOINT});
-    new CfnOutput(this, "LOGOUT_ENDPOINT", {value: LOGOUT_ENDPOINT});
+    new CfnOutput(this, `${id}_AWS_REGION`, {exportName: `AWS_REGION`, value: AWS_REGION});
+    new CfnOutput(this, `${id}_DATA_TABLE`, {exportName: `DATA_TABLE`, value: DATA_TABLE});
+    new CfnOutput(this, `${id}_SESSION_TABLE`, {exportName: `SESSION_TABLE`, value: SESSION_TABLE});
+    new CfnOutput(this, `${id}_CLIENT_ID`, {exportName: `CLIENT_ID`, value: CLIENT_ID});
+    new CfnOutput(this, `${id}_USER_POOL_ID`, {exportName: `USER_POOL_ID`, value: USER_POOL_ID});
+    new CfnOutput(this, `${id}_CLIENT_SECRET`, {exportName: `CLIENT_SECRET`, value: CLIENT_SECRET});
+    new CfnOutput(this, `${id}_REDIRECT_URL`, {exportName: `REDIRECT_URL`, value: REDIRECT_URL});
+    new CfnOutput(this, `${id}_TOKEN_ENDPOINT`, {exportName: `TOKEN_ENDPOINT`, value: TOKEN_ENDPOINT});
+    new CfnOutput(this, `${id}_LOGIN_ENDPOINT`, {exportName: `LOGIN_ENDPOINT`, value: LOGIN_ENDPOINT});
+    new CfnOutput(this, `${id}_LOGOUT_ENDPOINT`, {exportName: `LOGOUT_ENDPOINT`, value: LOGOUT_ENDPOINT});
     // </-------- Env for Nuxt3 -------->
   }
 }
