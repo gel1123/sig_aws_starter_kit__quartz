@@ -431,7 +431,18 @@ export class CdkStack extends Stack {
       }),
     });
     dataBucket.addToResourcePolicy(new PolicyStatement({
-      actions: ["s3:GetObject"],
+      actions: [
+        "s3:GetObject*",
+        "s3:GetBucket*",
+        "s3:List*",
+        "s3:DeleteObject*",
+        "s3:PutObject",
+        "s3:PutObjectLegalHold",
+        "s3:PutObjectRetention",
+        "s3:PutObjectTagging",
+        "s3:PutObjectVersionTagging",
+        "s3:Abort*"
+      ],
       principals: [new ArnPrincipal(idPool.authenticatedRoleArn)],
       resources: [
         `${dataBucket.bucketArn}`,
