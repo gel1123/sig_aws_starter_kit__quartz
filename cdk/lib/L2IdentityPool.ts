@@ -13,6 +13,7 @@ export interface L2IdentityPoolProps extends CfnIdentityPoolProps {
  */
 export class L2IdentityPool extends Construct {
   readonly pool: CfnIdentityPool;
+  readonly authenticatedRoleArn: string;
   constructor(scope: Construct, id: string, props: L2IdentityPoolProps) {
     super(scope, id);
     const authenticatedPolicyDocument = props.authenticatedPolicyDocument ?? new PolicyDocument({
@@ -21,10 +22,10 @@ export class L2IdentityPool extends Construct {
           effect: Effect.ALLOW,
           actions: [
             "cognito-sync:*",
-            "cognito-identity:*"
+            "cognito-identity:*",
           ],
           resources: ["*"],
-        })
+        }),
       ]
     });
     const unauthenticatedPolicyDocument = props.unauthenticatedPolicyDocument ?? new PolicyDocument({
@@ -50,6 +51,7 @@ export class L2IdentityPool extends Construct {
         }),
       inlinePolicies: { 'policy': authenticatedPolicyDocument },
     });
+    this.authenticatedRoleArn = authenticatedRole.roleArn;
     const unauthenticatedRole = new Role(this, 'unauthRole', {
       assumedBy:
         new FederatedPrincipal("cognito-identity.amazonaws.com", {

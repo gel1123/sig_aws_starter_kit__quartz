@@ -2,7 +2,7 @@ import { CfnIdentityPool, CfnIdentityPoolRoleAttachment, UserPool } from 'aws-cd
 import { Duration, PhysicalName, RemovalPolicy, Stack, StackProps, CfnOutput } from 'aws-cdk-lib';
 import { AllowedMethods, CacheCookieBehavior, CacheHeaderBehavior, CachePolicy, CacheQueryStringBehavior, Distribution, experimental, LambdaEdgeEventType, OriginAccessIdentity, OriginRequestCookieBehavior, OriginRequestHeaderBehavior, OriginRequestPolicy, OriginRequestQueryStringBehavior, PriceClass, ViewerProtocolPolicy } from "aws-cdk-lib/aws-cloudfront";
 import { AttributeType, BillingMode, ProjectionType, Table } from "aws-cdk-lib/aws-dynamodb";
-import { CanonicalUserPrincipal, Effect, FederatedPrincipal, PolicyDocument, PolicyStatement, Role } from "aws-cdk-lib/aws-iam";
+import { ArnPrincipal, CanonicalUserPrincipal, Effect, FederatedPrincipal, PolicyDocument, PolicyStatement, Role } from "aws-cdk-lib/aws-iam";
 import { Code, Runtime } from "aws-cdk-lib/aws-lambda";
 import { RetentionDays } from "aws-cdk-lib/aws-logs";
 import { Bucket } from "aws-cdk-lib/aws-s3";
@@ -397,8 +397,47 @@ export class CdkStack extends Stack {
           providerName: `cognito-idp.ap-northeast-1.amazonaws.com/${userPool.userPoolId}`,
         },
       ],
+      authenticatedPolicyDocument: new PolicyDocument({
+        statements: [
+          new PolicyStatement({
+            effect: Effect.ALLOW,
+            actions: [
+              "cognito-sync:*",
+              "cognito-identity:*",
+            ],
+            resources: ["*"],
+          }),
+          // s3 dataBucket readwrite
+          new PolicyStatement({
+            effect: Effect.ALLOW,
+            actions: [
+              "s3:GetObject*",
+              "s3:GetBucket*",
+              "s3:List*",
+              "s3:DeleteObject*",
+              "s3:PutObject",
+              "s3:PutObjectLegalHold",
+              "s3:PutObjectRetention",
+              "s3:PutObjectTagging",
+              "s3:PutObjectVersionTagging",
+              "s3:Abort*"
+            ],
+            resources: [
+              `${dataBucket.bucketArn}/*`,
+              `${dataBucket.bucketArn}`,
+            ],
+          }),
+        ]
+      }),
     });
-
+    dataBucket.addToResourcePolicy(new PolicyStatement({
+      actions: ["s3:GetObject"],
+      principals: [new ArnPrincipal(idPool.authenticatedRoleArn)],
+      resources: [
+        `${dataBucket.bucketArn}`,
+        `${dataBucket.bucketArn}/*`
+      ]
+    }));
     // </--------Cognito-------->
 
     // <-------- Env for Nuxt3 -------->
