@@ -352,7 +352,43 @@ export class CdkStack extends Stack {
     });
 
     // ID Pool
-    const identityPool = new CfnIdentityPool(this, `${id}_IdentityPool`, {
+    // const identityPool = new CfnIdentityPool(this, `${id}_IdentityPool`, {
+    //   identityPoolName: id,
+    //   allowUnauthenticatedIdentities: true,
+    //   cognitoIdentityProviders: [
+    //     {
+    //       clientId: userPoolClient.userPoolClientId,
+    //       providerName: `cognito-idp.ap-northeast-1.amazonaws.com/${userPool.userPoolId}`,
+    //     },
+    //   ],
+    // });
+    // const authenticatedRole = new Role(this, 'authRole', {
+    //   assumedBy:
+    //     new FederatedPrincipal("cognito-identity.amazonaws.com", {
+    //   "StringEquals": { "cognito-identity.amazonaws.com:aud": identityPool.ref },
+    //   "ForAnyValue:StringLike": { "cognito-identity.amazonaws.com:amr": "authenticated" },
+    //     }),
+    //   inlinePolicies: { 'policy': new PolicyDocument({
+    //     statements: [
+    //       new PolicyStatement({
+    //         effect: Effect.ALLOW,
+    //         actions: [
+    //           "cognito-sync:*",
+    //           "cognito-identity:*"
+    //         ],
+    //         resources: ["*"],
+    //       })
+    //     ]
+    //   })},
+    // });
+    // new CfnIdentityPoolRoleAttachment(this, 'roleAttachment', {
+    //   identityPoolId: identityPool.ref,
+    //   roles: {
+    //     "authenticated": authenticatedRole.roleArn,
+    //   }
+    // });
+
+    const idPool = new L2IdentityPool(this, `${id}_IdentityPool`, {
       identityPoolName: id,
       allowUnauthenticatedIdentities: true,
       cognitoIdentityProviders: [
@@ -362,41 +398,6 @@ export class CdkStack extends Stack {
         },
       ],
     });
-    const authenticatedRole = new Role(this, 'authRole', {
-      assumedBy:
-        new FederatedPrincipal("cognito-identity.amazonaws.com", {
-      "StringEquals": { "cognito-identity.amazonaws.com:aud": identityPool.ref },
-      "ForAnyValue:StringLike": { "cognito-identity.amazonaws.com:amr": "authenticated" },
-        }),
-      inlinePolicies: { 'policy': new PolicyDocument({
-        statements: [
-          new PolicyStatement({
-            effect: Effect.ALLOW,
-            actions: [
-              "cognito-sync:*",
-              "cognito-identity:*"
-            ],
-            resources: ["*"],
-          })
-        ]
-      })},
-    });
-    new CfnIdentityPoolRoleAttachment(this, 'roleAttachment', {
-      identityPoolId: identityPool.ref,
-      roles: {
-        "authenticated": authenticatedRole.roleArn,
-      }
-    });
-
-    // const idPool = new L2IdentityPool(this, `${id}_IdentityPool`, {
-    //   allowUnauthenticatedIdentities: true,
-    //   cognitoIdentityProviders: [
-    //     {
-    //       clientId: userPoolClient.userPoolClientId,
-    //       providerName: userPoolDomain.domainName,
-    //     }
-    //   ]
-    // });
 
     // </--------Cognito-------->
 
