@@ -1,8 +1,8 @@
-import { UserPool } from 'aws-cdk-lib/aws-cognito';
+import { CfnIdentityPool, CfnIdentityPoolRoleAttachment, UserPool } from 'aws-cdk-lib/aws-cognito';
 import { Duration, PhysicalName, RemovalPolicy, Stack, StackProps, CfnOutput } from 'aws-cdk-lib';
 import { AllowedMethods, CacheCookieBehavior, CacheHeaderBehavior, CachePolicy, CacheQueryStringBehavior, Distribution, experimental, LambdaEdgeEventType, OriginAccessIdentity, OriginRequestCookieBehavior, OriginRequestHeaderBehavior, OriginRequestPolicy, OriginRequestQueryStringBehavior, PriceClass, ViewerProtocolPolicy } from "aws-cdk-lib/aws-cloudfront";
 import { AttributeType, BillingMode, ProjectionType, Table } from "aws-cdk-lib/aws-dynamodb";
-import { CanonicalUserPrincipal, PolicyStatement } from "aws-cdk-lib/aws-iam";
+import { CanonicalUserPrincipal, Effect, FederatedPrincipal, PolicyDocument, PolicyStatement, Role } from "aws-cdk-lib/aws-iam";
 import { Code, Runtime } from "aws-cdk-lib/aws-lambda";
 import { RetentionDays } from "aws-cdk-lib/aws-logs";
 import { Bucket } from "aws-cdk-lib/aws-s3";
@@ -10,6 +10,7 @@ import { BucketDeployment, Source } from "aws-cdk-lib/aws-s3-deployment";
 import { Construct } from "constructs";
 import { S3Origin } from 'aws-cdk-lib/aws-cloudfront-origins';
 import { RoleStack } from './role-stack';
+import { L2IdentityPool } from './L2IdentityPool';
 
 export class CdkStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -349,6 +350,54 @@ export class CdkStack extends Stack {
         domainPrefix: id.toLowerCase().replace(/[^a-zA-Z0-9]/g, "-"),
       },
     });
+
+    // ID Pool
+    const identityPool = new CfnIdentityPool(this, `${id}_IdentityPool`, {
+      identityPoolName: id,
+      allowUnauthenticatedIdentities: true,
+      cognitoIdentityProviders: [
+        {
+          clientId: userPoolClient.userPoolClientId,
+          providerName: `cognito-idp.ap-northeast-1.amazonaws.com/${userPool.userPoolId}`,
+        },
+      ],
+    });
+    const authenticatedRole = new Role(this, 'authRole', {
+      assumedBy:
+        new FederatedPrincipal("cognito-identity.amazonaws.com", {
+      "StringEquals": { "cognito-identity.amazonaws.com:aud": identityPool.ref },
+      "ForAnyValue:StringLike": { "cognito-identity.amazonaws.com:amr": "authenticated" },
+        }),
+      inlinePolicies: { 'policy': new PolicyDocument({
+        statements: [
+          new PolicyStatement({
+            effect: Effect.ALLOW,
+            actions: [
+              "cognito-sync:*",
+              "cognito-identity:*"
+            ],
+            resources: ["*"],
+          })
+        ]
+      })},
+    });
+    new CfnIdentityPoolRoleAttachment(this, 'roleAttachment', {
+      identityPoolId: identityPool.ref,
+      roles: {
+        "authenticated": authenticatedRole.roleArn,
+      }
+    });
+
+    // const idPool = new L2IdentityPool(this, `${id}_IdentityPool`, {
+    //   allowUnauthenticatedIdentities: true,
+    //   cognitoIdentityProviders: [
+    //     {
+    //       clientId: userPoolClient.userPoolClientId,
+    //       providerName: userPoolDomain.domainName,
+    //     }
+    //   ]
+    // });
+
     // </--------Cognito-------->
 
     // <-------- Env for Nuxt3 -------->
