@@ -11,7 +11,7 @@
  * Content-Type: application/json は必須
  */
 export default defineEventHandler(async (e) => {
-  const body =  e.req.method === 'POST' ? await useBody<string>(e) : undefined;
+  const body =  e.req.method === 'POST' ? await useBody(e) : undefined;
   const query = useQuery(e);
   return {body, query};
 });

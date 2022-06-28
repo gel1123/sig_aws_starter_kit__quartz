@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import { resize } from '~~/usecase/imageUsecase';
 
 const fetchedData = ref<undefined | string>(undefined);
-
 const fetch = async () => {
   console.log('clicked');
   const res = await useFetch('/api/echo', {
@@ -18,6 +18,38 @@ const fetch = async () => {
   fetchedData.value = data;
 };
 
+const resizedDataUrl = ref<null | string>(null);
+const fileName = ref<null | string>(null);
+const onChangeImage = async (e: Event) => {
+  console.log("onChangeImage");
+  const file = (e.target as HTMLInputElement | null)?.files?.[0];
+  if (file) {
+    console.log('file.name', file.name);
+    fileName.value = file.name;
+    const {
+      resizedDataUrl: _resizedDataUrl
+    } = await resize(file);
+
+    resizedDataUrl.value = _resizedDataUrl;
+  }
+};
+
+const uploadImage = async () => {
+  const dataUrl = resizedDataUrl.value;
+  const result = await useFetch('/api/putImage', {
+    method: "POST",
+    body: {dataUrl, fileName: fileName.value},
+  });
+  if (result.error.value) {
+    alert("通信に失敗しました。時間をおいて再度お試しください。")
+  }
+  console.log("result.data: ", result.data);
+  alert("画像のアップロードが完了しました。");
+};
+
+const config = useRuntimeConfig();
+const url =  `${config.cloudFrontUrl}/items/test/item.imagefile`;
+
 </script>
 <template>
   <div>
@@ -30,6 +62,33 @@ const fetch = async () => {
         <p class="mb-2 text-gray-400">fetched data is ...</p>
         <pre class="whitespace-pre-wrap">{{fetchedData}}</pre>
       </div>
+    </Outline>
+    <Outline>
+      <p>Put your image file to S3.</p>
+      <div className="h-48 w-48 bg-gray-100 my-4">
+        <img
+          v-if="resizedDataUrl"
+          :src="resizedDataUrl"
+          width="192"
+          height="192"
+          alt="image"
+          class="object-cover rounded-lg border-2 border-gray-300"
+        />
+      </div>
+      <input
+        @change="onChangeImage"
+        accept="image/*"
+        type="file"
+        id="image"
+        class="text-sm w-full py-2 border-b focus:outline-none focus:border-b-2 placeholder-gray-600 placeholder-opacity-50"
+        placeholder="アイコン画像"
+      />
+      
+      <button class="mt-5 mb-10 p-4 bg-slate-400 hover:opacity-70 w-full rounded-lg shadow-md" @click="uploadImage">
+        Upload
+      </button>
+
+      <img :src="url" class="my-4" />
     </Outline>
     <Outline>
       <p>If you want to log out, press the button below.</p>

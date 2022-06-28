@@ -8,7 +8,7 @@ export default defineNuxtConfig({
   typescript: {
       strict: true
   },
-  privateRuntimeConfig: {
+  runtimeConfig: {
     isDev: process.env.NODE_ENV === 'development',
     region: process.env.AWS_REGION,
 
@@ -25,6 +25,12 @@ export default defineNuxtConfig({
     loginEndpoint: process.env.COGNITO_LOGIN_ENDPOINT,
     logoutEndpoint: process.env.COGNITO_LOGOUT_ENDPOINT,
     redirectUrl: process.env.COGNITO_REDIRECT_URL,
+    public: {
+      // CloudFront（AWS環境上ではリダイレクトURLと同一だが、ローカルでは異なる）
+      cloudFrontUrl: process.env.CLOUD_FRONT_URL ?
+        process.env.CLOUD_FRONT_URL
+        : process.env.COGNITO_REDIRECT_URL
+    },
   },
   ssr: true, // ビルドモードの指定。trueなら SSR or SSG. falseなら SPA. デフォルトでtrue.
   target: 'server', // ビルドモードの指定。'server'なら SSR. 'static'なら SSG or SPA. デフォルトで 'server'.
