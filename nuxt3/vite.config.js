@@ -1,10 +1,23 @@
 // import { defineConfig } from 'vite'
+// // import vue
 
-// console.log("vite.config.js")
+// // console.log("vite.config.js")
+// // export default defineConfig({
+// //   resolve: {
+// //     alias: {
+// //       './runtimeConfig': './runtimeConfig.browser',
+// //     },
+// //   }
+// // });
+
 // export default defineConfig({
+//   plugins: [vue()],
 //   resolve: {
-//     alias: {
-//       './runtimeConfig': './runtimeConfig.browser',
-//     },
+//       alias: [
+//       {
+//         find: './runtimeConfig',
+//         replacement: './runtimeConfig.browser',
+//       },
+//     ]
 //   }
-// });
+// })

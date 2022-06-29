@@ -14,6 +14,9 @@ import { S3Client } from '@aws-sdk/client-s3';
 // 参考：
 //  - https://stackoverflow.com/questions/70060570/vitesse-vue3-issue-adding-libraries
 //  - https://github.com/ionic-team/rollup-plugin-node-polyfills
+
+var global = global || window;
+var exports = {};
 import { CognitoIdentityCredentialProvider, fromCognitoIdentityPool } from '@aws-sdk/credential-providers';
 
 let memo = {} as { client?: S3Client};
