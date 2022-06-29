@@ -9,13 +9,10 @@ export default defineNuxtConfig({
       strict: true
   },
   runtimeConfig: {
-    isDev: process.env.NODE_ENV === 'development',
-    region: process.env.AWS_REGION,
 
     // ストア関連
     dataTable: process.env.DYNAMO_DATA_TABLE,
     sessionTable: process.env.DYNAMO_SESSION_TABLE,
-    bucket: process.env.S3_DATA_BUCKET,
     
     // Cognito関連
     clientId: process.env.COGNITO_CLIENT_ID,
@@ -25,7 +22,15 @@ export default defineNuxtConfig({
     loginEndpoint: process.env.COGNITO_LOGIN_ENDPOINT,
     logoutEndpoint: process.env.COGNITO_LOGOUT_ENDPOINT,
     redirectUrl: process.env.COGNITO_REDIRECT_URL,
+
     public: {
+      isDev: process.env.NODE_ENV === 'development',
+
+      // S3を認証済みフロントエンドから操作するためのconfig
+      region: process.env.AWS_REGION,
+      bucket: process.env.S3_DATA_BUCKET,
+      identityPoolId: process.env.COGNITO_IDENTITY_POOL_ID,
+
       // CloudFront（AWS環境上ではリダイレクトURLと同一だが、ローカルでは異なる）
       cloudFrontUrl: process.env.CLOUD_FRONT_URL ?
         process.env.CLOUD_FRONT_URL

@@ -478,6 +478,7 @@ export class CdkStack extends Stack {
     new CfnOutput(this, `COGNITO-TOKEN-ENDPOINT`, {value: COGNITO_TOKEN_ENDPOINT});
     new CfnOutput(this, `COGNITO-LOGIN-ENDPOINT`, {value: COGNITO_LOGIN_ENDPOINT});
     new CfnOutput(this, `COGNITO-LOGOUT-ENDPOINT`, {value: COGNITO_LOGOUT_ENDPOINT});
+    new CfnOutput(this, `COGNITO-IDENTITY-POOL-ID`, {value: idPool.identityPoolId});
     // </-------- Env for Nuxt3 -------->
   }
 }
