@@ -14,11 +14,11 @@ import { S3Client } from '@aws-sdk/client-s3';
 // 参考：
 //  - https://stackoverflow.com/questions/70060570/vitesse-vue3-issue-adding-libraries
 //  - https://github.com/ionic-team/rollup-plugin-node-polyfills
-import { CognitoIdentityCredentialProvider, fromCognitoIdentityPool } from '@aws-sdk/credential-providers';
+// import { CognitoIdentityCredentialProvider, fromCognitoIdentityPool } from '@aws-sdk/credential-providers';
 
 let memo = {} as { client?: S3Client};
 
-export const getS3Client = ({region, frontEndOption}: {
+export const getS3Client = async ({region, frontEndOption}: {
   region: string,
   frontEndOption?: {
     identityPoolId: string,
@@ -32,10 +32,11 @@ export const getS3Client = ({region, frontEndOption}: {
    * なお、これはS3書き込みをフロントエンドで行うためのロール取得処理であって、
    * バックエンドでは不要である（Lambdaに割り当てたロールがあるため）。
    */
-  const credentials = (() => {
+  const credentials = await (async () => {
     if (!frontEndOption) return undefined;
     const {identityPoolId, idToken} = frontEndOption;
-    const credentialProvider: CognitoIdentityCredentialProvider = fromCognitoIdentityPool({
+    const { fromCognitoIdentityPool } = await import('@aws-sdk/credential-providers');
+    const credentialProvider = fromCognitoIdentityPool({
       identityPoolId: identityPoolId,
       logins: {
         "www.amazon.com": idToken,
