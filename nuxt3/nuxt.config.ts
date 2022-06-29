@@ -2,45 +2,6 @@ import { defineNuxtConfig } from 'nuxt'
 
 // https://v3.nuxtjs.org/api/configuration/nuxt.config
 export default defineNuxtConfig({
-  vite: {
-    resolve: {
-      alias: {
-        './runtimeConfig': './runtimeConfig.browser',
-        process: require.resolve("rollup-plugin-node-polyfills"),
-        events: require.resolve("rollup-plugin-node-polyfills"),
-        stream: require.resolve("rollup-plugin-node-polyfills"),
-        util: require.resolve("rollup-plugin-node-polyfills"),
-        path: require.resolve("rollup-plugin-node-polyfills"),
-        buffer: require.resolve("rollup-plugin-node-polyfills"),
-        querystring: require.resolve("rollup-plugin-node-polyfills"),
-        url: require.resolve("rollup-plugin-node-polyfills"),
-        string_decoder: require.resolve("rollup-plugin-node-polyfills"),
-        punycode: require.resolve("rollup-plugin-node-polyfills"),
-        http: require.resolve("rollup-plugin-node-polyfills"),
-        https: require.resolve("rollup-plugin-node-polyfills"),
-        os: require.resolve("rollup-plugin-node-polyfills"),
-        assert: require.resolve("rollup-plugin-node-polyfills"),
-        constants: require.resolve("rollup-plugin-node-polyfills"),
-        timers: require.resolve("rollup-plugin-node-polyfills"),
-        console: require.resolve("rollup-plugin-node-polyfills"),
-        vm: require.resolve("rollup-plugin-node-polyfills"),
-        zlib: require.resolve("rollup-plugin-node-polyfills"),
-        tty: require.resolve("rollup-plugin-node-polyfills"),
-        domain: require.resolve("rollup-plugin-node-polyfills"),
-        dns: require.resolve("rollup-plugin-node-polyfills"),
-        dgram: require.resolve("rollup-plugin-node-polyfills"),
-        child_process: require.resolve("rollup-plugin-node-polyfills"),
-        cluster: require.resolve("rollup-plugin-node-polyfills"),
-        module: require.resolve("rollup-plugin-node-polyfills"),
-        net: require.resolve("rollup-plugin-node-polyfills"),
-        readline: require.resolve("rollup-plugin-node-polyfills"),
-        repl: require.resolve("rollup-plugin-node-polyfills"),
-        tls: require.resolve("rollup-plugin-node-polyfills"),
-        fs: require.resolve("rollup-plugin-node-polyfills"),
-        crypto: require.resolve("rollup-plugin-node-polyfills"),
-      }
-    }
-  },
   nitro: {
       preset: 'aws-lambda' // Nuxt3をLambdaとしてビルドする設定
   },
