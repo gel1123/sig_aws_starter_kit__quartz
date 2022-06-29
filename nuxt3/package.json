@@ -16,7 +16,6 @@
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.113.0",
     "@aws-sdk/client-s3": "^3.113.0",
-    "@aws-sdk/credential-providers": "^3.118.1",
     "@aws-sdk/lib-dynamodb": "^3.113.0",
     "aws-jwt-verify": "^3.1.0",
     "imtool": "^1.1.5",
