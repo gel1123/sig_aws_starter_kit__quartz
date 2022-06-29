@@ -38,7 +38,7 @@ export const uploadImageToS3 = async ({dataUrl}: {
   console.log("idToken:", `${idToken.substring(0, 10)}...`);
   const frontEndOption = {identityPoolId, idToken}
 
-  const S3C = await getS3Client({region, frontEndOption});
+  const S3C = getS3Client({region, frontEndOption});
   
   let s3Result;
   try {
