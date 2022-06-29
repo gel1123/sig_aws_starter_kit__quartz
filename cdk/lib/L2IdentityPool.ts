@@ -1,5 +1,5 @@
 import { CfnIdentityPool, CfnIdentityPoolProps, CfnIdentityPoolRoleAttachment } from "aws-cdk-lib/aws-cognito";
-import { Effect, FederatedPrincipal, PolicyDocument, PolicyStatement, Role } from "aws-cdk-lib/aws-iam";
+import { Effect, PolicyDocument, PolicyStatement, Role, WebIdentityPrincipal } from "aws-cdk-lib/aws-iam";
 import { Construct } from "constructs";
 
 export interface L2IdentityPoolProps extends CfnIdentityPoolProps {
@@ -46,7 +46,12 @@ export class L2IdentityPool extends Construct {
     })
     const authenticatedRole = new Role(this, 'authRole', {
       assumedBy:
-        new FederatedPrincipal("cognito-identity.amazonaws.com", {
+        // FederatedPrincipal では "Action": "sts:AssumeRole" になってしまう。
+        // これだと、Cognito User Pools を Provider にしてクレデンシャル取得を試みた時、
+        // 「Invalid identity pool configuration. Check assigned IAM roles for this pool.」とエラーが出てしまう。
+        // Action に割り当てるべきは「"sts:AssumeRoleWithWebIdentity"」なので、
+        // WebIdentityPrincipal を使う。
+        new WebIdentityPrincipal("cognito-identity.amazonaws.com", {
       "StringEquals": { "cognito-identity.amazonaws.com:aud": identityPool.ref },
       "ForAnyValue:StringLike": { "cognito-identity.amazonaws.com:amr": "authenticated" },
         }),
@@ -55,7 +60,7 @@ export class L2IdentityPool extends Construct {
     this.authenticatedRoleArn = authenticatedRole.roleArn;
     const unauthenticatedRole = new Role(this, 'unauthRole', {
       assumedBy:
-        new FederatedPrincipal("cognito-identity.amazonaws.com", {
+        new WebIdentityPrincipal("cognito-identity.amazonaws.com", {
       "StringEquals": { "cognito-identity.amazonaws.com:aud": identityPool.ref },
       "ForAnyValue:StringLike": { "cognito-identity.amazonaws.com:amr": "unauthenticated" },
         }),

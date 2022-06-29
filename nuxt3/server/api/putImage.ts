@@ -84,6 +84,7 @@ export default defineEventHandler(async (e) => {
   //   また、ReturnValuesを指定したとしても、Put操作では「上書き前のレコード」を返す設定しか存在せず、
   //   新しく上書きした（追加した）レコードをレスポンスから取得する手段は存在しない。
   //   https://docs.aws.amazon.com/ja_jp/amazondynamodb/latest/developerguide/WorkingWithItems.html#WorkingWithItems.ReturnValues
+  
 
   
   return {
