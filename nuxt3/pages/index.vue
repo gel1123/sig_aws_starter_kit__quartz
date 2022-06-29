@@ -1,8 +1,11 @@
 <script setup lang="ts">
+import nodeFetch from 'node-fetch';
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { resize } from '~~/usecase/imageUsecase';
+import { CognitoIdentityCredentialProvider, fromCognitoIdentityPool } from '@aws-sdk/credential-providers';
 
 const fetchedData = ref<undefined | string>(undefined);
-const fetch = async () => {
+const fetchEcho = async () => {
   console.log('clicked');
   const res = await useFetch('/api/echo', {
     method: 'POST',
@@ -36,6 +39,48 @@ const onChangeImage = async (e: Event) => {
 
 const uploadImage = async () => {
   const dataUrl = resizedDataUrl.value;
+
+  if (!dataUrl || !fileName.value) {
+    console.log("dataUrl is null");
+    return;
+  }
+
+  //----------------------------------------------
+  const config = useRuntimeConfig()
+  const region = config.public.region;
+  const Bucket = config.public.bucket;
+  const itemID = "test";
+  const Key = `items/${itemID}/${fileName}`;
+
+  const blob = await (await (fetch || nodeFetch)(dataUrl)).blob();
+  const file = new File([blob], fileName.value);
+  const arrayBuffer = await file.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+
+  const credentialProvider: CognitoIdentityCredentialProvider = fromCognitoIdentityPool({
+    identityPoolId: config.public.identityPoolId,
+    logins: {
+      "www.amazon.com": (await useCookie("id_token")).value,
+    },
+    clientConfig: {region},
+  });
+
+  const S3C = new S3Client({
+    region, credentials: credentialProvider
+  });
+  
+  let s3Result;
+  try {
+    console.log("try put item to s3")
+    const _s3Result = await S3C.send(new PutObjectCommand({Bucket, Key, Body: buffer}));
+    console.log("s3 result:", _s3Result);
+    s3Result=_s3Result;
+  } catch (e) {
+    console.log("error:", e);
+  }
+
+  //----------------------------------------------
+
   const result = await useFetch('/api/putImage', {
     method: "POST",
     body: {dataUrl, fileName: fileName.value},
@@ -55,7 +100,7 @@ const url =  `${config.public.cloudFrontUrl}/items/test/item.imagefile`;
   <div>
     <Outline>
       <p>You have successfully logged in!</p>
-      <button class="mt-5 mb-10 p-4 bg-slate-400 hover:opacity-70 w-full rounded-lg shadow-md" @click="fetch">
+      <button class="mt-5 mb-10 p-4 bg-slate-400 hover:opacity-70 w-full rounded-lg shadow-md" @click="fetchEcho">
         fetch (POST)
       </button>
       <div class="bg-slate-300 text-gray-700 p-5">
