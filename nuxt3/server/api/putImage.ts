@@ -30,7 +30,7 @@ export default defineEventHandler(async (e) => {
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
 
-  const S3C = getS3Client({region});
+  const S3C = await getS3Client({region});
   const DDC = getDynamoDBDocumentClient({region});
 
   const TableName = config.dataTable;
