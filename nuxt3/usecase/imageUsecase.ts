@@ -18,50 +18,50 @@ export const resize = async (file: ImageType) => {
   return { resizedDataUrl };
 };
 
-export const uploadImageToS3 = async ({dataUrl}: {
-  dataUrl: string;
-}) => {
-  const config = useRuntimeConfig()
-  const region = config.public.region;
-  const Bucket = config.public.bucket;
-  const itemID = "test";
-  const fileName = /* body.fileName */ "item.imagefile";
-  const Key = `items/${itemID}/${fileName}`;
+// export const uploadImageToS3 = async ({dataUrl}: {
+//   dataUrl: string;
+// }) => {
+//   const config = useRuntimeConfig()
+//   const region = config.public.region;
+//   const Bucket = config.public.bucket;
+//   const itemID = "test";
+//   const fileName = /* body.fileName */ "item.imagefile";
+//   const Key = `items/${itemID}/${fileName}`;
 
-  const blob = await (await fetch(dataUrl)).blob();
-  const file = new File([blob], fileName);
-  const arrayBuffer = await file.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
+//   const blob = await (await fetch(dataUrl)).blob();
+//   const file = new File([blob], fileName);
+//   const arrayBuffer = await file.arrayBuffer();
+//   const buffer = Buffer.from(arrayBuffer);
 
-  const idToken = useCookie("id_token").value;
-  const identityPoolId = config.public.identityPoolId;
-  console.log("idToken:", `${idToken.substring(0, 10)}...`);
-  const frontEndOption = {identityPoolId, idToken}
+//   const idToken = useCookie("id_token").value;
+//   const identityPoolId = config.public.identityPoolId;
+//   console.log("idToken:", `${idToken.substring(0, 10)}...`);
+//   const frontEndOption = {identityPoolId, idToken}
 
-  const S3C = getS3Client({region, frontEndOption});
+//   const S3C = getS3Client({region, frontEndOption});
   
-  let s3Result;
-  try {
-    console.log("try put item to s3")
-    const _s3Result = await S3C.send(new PutObjectCommand({Bucket, Key, Body: buffer}));
-    console.log("s3 result:", _s3Result);
-    s3Result=_s3Result;
-  } catch (e) {
-    console.log("error:", e);
-    return {
-      httpStatusCode: 500,
-      errorMessage: "Error occurred when put item to S3.",
-    };
-  }
+//   let s3Result;
+//   try {
+//     console.log("try put item to s3")
+//     const _s3Result = await S3C.send(new PutObjectCommand({Bucket, Key, Body: buffer}));
+//     console.log("s3 result:", _s3Result);
+//     s3Result=_s3Result;
+//   } catch (e) {
+//     console.log("error:", e);
+//     return {
+//       httpStatusCode: 500,
+//       errorMessage: "Error occurred when put item to S3.",
+//     };
+//   }
 
-  if (s3Result.$metadata.httpStatusCode !== 200) {
-    return {
-      httpStatusCode: s3Result.$metadata.httpStatusCode,
-      errorMessage: "Failed to put item to S3.",
-    };
-  }
+//   if (s3Result.$metadata.httpStatusCode !== 200) {
+//     return {
+//       httpStatusCode: s3Result.$metadata.httpStatusCode,
+//       errorMessage: "Failed to put item to S3.",
+//     };
+//   }
   
-  return {
-    httpStatusCode: 200,
-  }
-}
+//   return {
+//     httpStatusCode: 200,
+//   }
+// }
