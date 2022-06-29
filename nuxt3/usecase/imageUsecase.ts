@@ -1,7 +1,7 @@
-// import { PutObjectCommand } from '@aws-sdk/client-s3';
+import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { fromImage } from 'imtool';
 import { ImageType } from 'imtool/lib/Utils';
-// import { getS3Client } from '~~/repository/s3Repository';
+import { getS3Client } from '~~/repository/s3Repository';
 
 /**
  * 画像をリサイズする。
@@ -18,11 +18,6 @@ export const resize = async (file: ImageType) => {
   return { resizedDataUrl };
 };
 
-// -------------------------------------
-// ここをコメントアウト解除すると、
-// なぜかエラーが多発する（しかもエラーメッセージがとても分かりにくいので注意）
-// -------------------------------------
-//
 // export const uploadImageToS3 = async ({dataUrl}: {
 //   dataUrl: string;
 // }) => {
