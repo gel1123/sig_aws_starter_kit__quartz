@@ -39,7 +39,7 @@ export default defineEventHandler(async (event) => {
     sameSite: 'lax',
   });
   // SESSION_TABLE にトランザクションIDをキーとして、OKCEのcode_challengeを保存する
-  const DDC = getDynamoDBDocumentClient({region: config.region});
+  const DDC = getDynamoDBDocumentClient({region: config.public.region});
   const result = await (async () => {
     try {
       const _result = await DDC.send(new PutCommand({
@@ -54,7 +54,7 @@ export default defineEventHandler(async (event) => {
       })); 
       return _result;
     } catch (e) {
-      if (config.isDev && (e as unknown as Error)?.name === "UnrecognizedClientException") {
+      if (config.public.isDev && (e as unknown as Error)?.name === "UnrecognizedClientException") {
         // ローカルでの動作確認時には、AWSのアクセスキー設定し忘れでここに到達する可能性がある
         console.warn(
           "AWSのAccessKeyもしくはSecretAccessKeyが設定されていません。\n"

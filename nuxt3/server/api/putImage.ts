@@ -18,8 +18,9 @@ import { getS3Client } from "~~/repository/s3Repository";
 export default defineEventHandler(async (e) => {
   const body =  e.req.method === 'POST' ? await useBody(e) : undefined;
   const config = useRuntimeConfig();
-  const region = config.region;
-  const Bucket = config.bucket;
+  const region = config.public.region;
+  const Bucket = config.public.bucket;
+  console.log({Bucket, region});
   const itemID = "test";
   const fileName = /* body.fileName */ "item.imagefile";
   const Key = `items/${itemID}/${fileName}`;

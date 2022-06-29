@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
   if (code) {
 
     // for PKCE
-    const DDC = getDynamoDBDocumentClient({region: config.region});
+    const DDC = getDynamoDBDocumentClient({region: config.public.region});
     const result = await DDC.send(new GetCommand({
       TableName: config.sessionTable,
       Key: {
@@ -71,7 +71,7 @@ export default defineEventHandler(async (event) => {
       `code_verifier=${code_verifier}`
     });
     const json = await res.json();
-    config.isDev && console.log("idToken", json.id_token.substring(0, 10) + "..."); 
+    config.public.isDev && console.log("idToken", json.id_token.substring(0, 10) + "..."); 
 
     json.access_token ?
       setCookie(event, "access_token", json.access_token, {

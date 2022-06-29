@@ -50,7 +50,11 @@ export const getS3Client = ({region, frontEndOption}: {
   })()
 
   const s3Client = new S3Client({
-    region, credentials
+    region,
+    // credentials: {
+    //   accessKeyId: "",
+    //   secretAccessKey: "",
+    // }
   });
 
   // const s3Client = new S3Client({
