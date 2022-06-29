@@ -13,6 +13,7 @@ export interface L2IdentityPoolProps extends CfnIdentityPoolProps {
  */
 export class L2IdentityPool extends Construct {
   readonly pool: CfnIdentityPool;
+  readonly identityPoolId: string;
   readonly authenticatedRoleArn: string;
   constructor(scope: Construct, id: string, props: L2IdentityPoolProps) {
     super(scope, id);
@@ -60,6 +61,7 @@ export class L2IdentityPool extends Construct {
         }),
       inlinePolicies: { 'policy': unauthenticatedPolicyDocument },
       });
+    this.identityPoolId = identityPool.ref;
     new CfnIdentityPoolRoleAttachment(this, 'roleAttachment', {
       identityPoolId: identityPool.ref,
       roles: {

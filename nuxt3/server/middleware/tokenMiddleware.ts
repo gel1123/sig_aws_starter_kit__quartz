@@ -1,5 +1,5 @@
 import { getDynamoDBDocumentClient } from "~~/repository/dynamoDBRepository";
-import { GetCommand, GetCommandInput, PutCommand, PutCommandInput, QueryCommand, QueryCommandInput } from "@aws-sdk/lib-dynamodb";
+import { GetCommand } from "@aws-sdk/lib-dynamodb";
 
 // https://v3.nuxtjs.org/guide/features/server-routes
 export default defineEventHandler(async (event) => {
@@ -71,6 +71,7 @@ export default defineEventHandler(async (event) => {
       `code_verifier=${code_verifier}`
     });
     const json = await res.json();
+    config.isDev && console.log("idToken", json.id_token.substring(0, 10) + "..."); 
 
     json.access_token ?
       setCookie(event, "access_token", json.access_token, {
