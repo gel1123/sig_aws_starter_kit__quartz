@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
       : await (async () => {
 
         if (cookies["refresh_token"]) {
-          const json = await refresh(cookies);
+          const json = await refresh({cookies, ...config});
           json.access_token ?
             setCookie(event, "access_token", json.access_token, {
               httpOnly: true,
