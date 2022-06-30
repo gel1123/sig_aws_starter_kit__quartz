@@ -29,20 +29,18 @@ export default defineNuxtConfig({
     logoutEndpoint: process.env.COGNITO_LOGOUT_ENDPOINT,
     redirectUrl: process.env.COGNITO_REDIRECT_URL,
 
-    public: {
-      isDev: process.env.NODE_ENV === 'development',
+    isDev: process.env.NODE_ENV === 'development',
 
-      // S3を認証済みフロントエンドから操作するためのconfig
-      region: process.env.AWS_REGION,
-      bucket: process.env.S3_DATA_BUCKET,
-      userPoolId: process.env.COGNITO_USER_POOL_ID,
-      identityPoolId: process.env.COGNITO_IDENTITY_POOL_ID,
+    // S3を認証済みフロントエンドから操作するためのconfig
+    region: process.env.AWS_REGION,
+    bucket: process.env.S3_DATA_BUCKET,
+    userPoolId: process.env.COGNITO_USER_POOL_ID,
+    identityPoolId: process.env.COGNITO_IDENTITY_POOL_ID,
 
-      // CloudFront（AWS環境上ではリダイレクトURLと同一だが、ローカルでは異なる）
-      cloudFrontUrl: process.env.CLOUD_FRONT_URL ?
-        process.env.CLOUD_FRONT_URL
-        : process.env.COGNITO_REDIRECT_URL
-    },
+    // CloudFront（AWS環境上ではリダイレクトURLと同一だが、ローカルでは異なる）
+    cloudFrontUrl: process.env.CLOUD_FRONT_URL ?
+      process.env.CLOUD_FRONT_URL
+      : process.env.COGNITO_REDIRECT_URL
   },
   ssr: true, // ビルドモードの指定。trueなら SSR or SSG. falseなら SPA. デフォルトでtrue.
   target: 'server', // ビルドモードの指定。'server'なら SSR. 'static'なら SSG or SPA. デフォルトで 'server'.

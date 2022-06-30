@@ -18,7 +18,7 @@ import { getDynamoDBDocumentClient } from "~~/repository/dynamoDBRepository";
 export default defineEventHandler(async (e) => {
   const body =  e.req.method === 'POST' ? await useBody(e) : undefined;
   const config = useRuntimeConfig();
-  const region = config.public.region;
+  const region = config.region;
   const DDC = getDynamoDBDocumentClient({region});
 
   const TableName = config.dataTable;

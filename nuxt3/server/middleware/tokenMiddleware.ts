@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
   if (code) {
 
     // for PKCE
-    const DDC = getDynamoDBDocumentClient({region: config.public.region});
+    const DDC = getDynamoDBDocumentClient({region: config.region});
     const result = await DDC.send(new GetCommand({
       TableName: config.sessionTable,
       Key: {

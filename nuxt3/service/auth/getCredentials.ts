@@ -6,16 +6,16 @@ import { CognitoIdentityClient, GetCredentialsForIdentityCommand, GetIdCommand }
 export const getCredentials = async (id_token: string) => {
   const config = useRuntimeConfig();
   // https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-cognito-identity/classes/getidcommand.html
-  const client = new CognitoIdentityClient({region: config.public.region});
-  const providerName = `cognito-${config.public.region}.amazonaws.com/${config.public.userPoolId}`;
+  const client = new CognitoIdentityClient({region: config.region});
+  const providerName = `cognito-${config.region}.amazonaws.com/${config.userPoolId}`;
   const Logins: {[providerName: string]: string} = {};
   Logins[providerName] = id_token;
   const getIdCommand = new GetIdCommand({
-    IdentityPoolId: config.public.identityPoolId, Logins
+    IdentityPoolId: config.identityPoolId, Logins
   });
   const getIdResponse = await client.send(getIdCommand);
   const IdentityId = getIdResponse.IdentityId;  
-  config.public.isDev && console.log("IdentityId", IdentityId);
+  config.isDev && console.log("IdentityId", IdentityId);
   // https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-cognito-identity/classes/getcredentialsforidentitycommand.html
   const getCredentialsForIdentityCommand = new GetCredentialsForIdentityCommand({
     IdentityId, Logins
@@ -28,6 +28,6 @@ export const getCredentials = async (id_token: string) => {
   // getCredentials は Cognito ID Pools のAPIのひとつだが、
   // その仕組みには、STS (AWS Security Token Service) が使われている。
   const credentials = (await getCredentialsResponse).Credentials;
-  config.public.isDev && console.log({credentials});
+  config.isDev && console.log({credentials});
   return credentials;
 }

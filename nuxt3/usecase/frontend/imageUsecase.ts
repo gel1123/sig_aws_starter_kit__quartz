@@ -33,8 +33,8 @@ export const uploadImageToS3 = async ({file, itemId, fileName}: {
   const cognitoCredentials = await getCredentials(idToken);
 
   const config = useRuntimeConfig()
-  const region = config.public.region;
-  const Bucket = config.public.bucket;
+  const region = config.region;
+  const Bucket = config.bucket;
   const Key = `items/${itemId}/${fileName}`;
 
   // なお同様の処理をバックエンドで行うなら、bodyにdataURLを詰めて、fetch => Blob => File という変換手続きが必要になる。

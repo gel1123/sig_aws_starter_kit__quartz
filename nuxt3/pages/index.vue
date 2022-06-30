@@ -67,7 +67,7 @@ const uploadImage = async () => {
   alert("画像のアップロードが完了しました。");
 };
 
-const url =  `${config.public.cloudFrontUrl}/items/test001/item.imagefile`;
+const url =  `${config.cloudFrontUrl}/items/test001/item.imagefile`;
 
 </script>
 <template>
