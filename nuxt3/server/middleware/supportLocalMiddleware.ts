@@ -10,7 +10,6 @@ export default defineEventHandler(async (event) => {
   // CloudFrontのオリジンを付与する
   // （Lambda上ではこの処理は不要であり、到達しない）
   const redirectUrl = `${config.cloudFrontUrl}${event.req.url}`;
-  console.log("redirectUrl", redirectUrl);
   event.res.writeHead(302, {
     Location: redirectUrl,
   });
