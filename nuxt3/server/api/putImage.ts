@@ -21,7 +21,7 @@ export default defineEventHandler(async (e) => {
   const region = config.region;
   const Bucket = config.bucket;
   const itemID = "test";
-  const fileName = /* body.fileName */ "item.imagefile";
+  const fileName = /* body.fileName */ "item001.imagefile";
   const Key = `items/${itemID}/${fileName}`;
 
   const dataUrl = body.dataUrl;

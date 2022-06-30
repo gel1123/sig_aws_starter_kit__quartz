@@ -47,8 +47,7 @@ const uploadImage = async () => {
   alert("画像のアップロードが完了しました。");
 };
 
-const config = useRuntimeConfig();
-const url =  `${config.public.cloudFrontUrl}/items/test/item.imagefile`;
+const url = "/items/test/item001.imagefile";
 
 </script>
 <template>

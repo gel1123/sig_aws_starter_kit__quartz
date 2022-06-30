@@ -22,10 +22,10 @@ export const resize = async (file: ImageType) => {
 //   dataUrl: string;
 // }) => {
 //   const config = useRuntimeConfig()
-//   const region = config.public.region;
-//   const Bucket = config.public.bucket;
+//   const region = config.region;
+//   const Bucket = config.bucket;
 //   const itemID = "test";
-//   const fileName = /* body.fileName */ "item.imagefile";
+//   const fileName = /* body.fileName */ "item001.imagefile";
 //   const Key = `items/${itemID}/${fileName}`;
 
 //   const blob = await (await fetch(dataUrl)).blob();
@@ -34,7 +34,7 @@ export const resize = async (file: ImageType) => {
 //   const buffer = Buffer.from(arrayBuffer);
 
 //   const idToken = useCookie("id_token").value;
-//   const identityPoolId = config.public.identityPoolId;
+//   const identityPoolId = config.identityPoolId;
 //   console.log("idToken:", `${idToken.substring(0, 10)}...`);
 //   const frontEndOption = {identityPoolId, idToken}
 
