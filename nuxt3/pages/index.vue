@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import { resize } from '~~/usecase/imageUsecase';
+// import { resize, uploadImageToS3 } from '~~/usecase/frontend/imageUsecase';
+import { resize, uploadImageToS3 } from '~~/usecase/frontend/imageUsecase';
+
+const config = useRuntimeConfig()
 
 const fetchedData = ref<undefined | string>(undefined);
 const fetch = async () => {
@@ -19,6 +22,7 @@ const fetch = async () => {
 };
 
 const resizedDataUrl = ref<null | string>(null);
+const resizedFile = ref<null | File>(null);
 const fileName = ref<null | string>(null);
 const onChangeImage = async (e: Event) => {
   console.log("onChangeImage");
@@ -27,18 +31,34 @@ const onChangeImage = async (e: Event) => {
     console.log('file.name', file.name);
     fileName.value = file.name;
     const {
-      resizedDataUrl: _resizedDataUrl
+      resizedDataUrl: _resizedDataUrl,
+      resizedFile: _resizedFile,
     } = await resize(file);
 
     resizedDataUrl.value = _resizedDataUrl;
+    resizedFile.value = _resizedFile;
   }
 };
 
 const uploadImage = async () => {
-  const dataUrl = resizedDataUrl.value;
+  const file = resizedFile.value;
+  if (!file || !fileName.value) {
+    alert("画像のデータ取得に失敗しました");
+    return;
+  }
+  const itemId = "test001";
+  const {imagePath} = await uploadImageToS3({
+    file,
+    itemId,
+    fileName: /* fileName.value */ "item.imagefile",
+  });
+  if (!imagePath) {
+    alert("画像のアップロードに失敗しました");
+    return;
+  }
   const result = await useFetch('/api/putImage', {
     method: "POST",
-    body: {dataUrl, fileName: fileName.value},
+    body: {imagePath, itemId},
   });
   if (result.error.value) {
     alert("通信に失敗しました。時間をおいて再度お試しください。")
@@ -47,8 +67,7 @@ const uploadImage = async () => {
   alert("画像のアップロードが完了しました。");
 };
 
-const config = useRuntimeConfig();
-const url =  `${config.public.cloudFrontUrl}/items/test/item.imagefile`;
+const url =  `${config.public.cloudFrontUrl}/items/test001/item.imagefile`;
 
 </script>
 <template>

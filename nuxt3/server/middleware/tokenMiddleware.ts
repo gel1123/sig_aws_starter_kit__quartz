@@ -1,7 +1,5 @@
 import { getDynamoDBDocumentClient } from "~~/repository/dynamoDBRepository";
 import { GetCommand } from "@aws-sdk/lib-dynamodb";
-import * as idp from "@aws-sdk/client-cognito-identity";
-import { ClientOnly } from '../../.nuxt/components';
 
 // https://v3.nuxtjs.org/guide/features/server-routes
 export default defineEventHandler(async (event) => {
@@ -73,32 +71,16 @@ export default defineEventHandler(async (event) => {
       `code_verifier=${code_verifier}`
     });
     const json = await res.json();
-    // config.public.isDev && console.log("idToken", json.id_token.substring(0, 10) + "..."); 
-    // config.public.isDev && console.log("accessToken", json.access_token.substring(0, 10) + "...");
-    // config.public.isDev && console.log("config.public.identityPoolId", config.public.identityPoolId.substring(0, 10) + "...");
-    // config.public.isDev && console.log("認可コード：", code);
 
-    // https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-cognito-identity/classes/getidcommand.html
-    const client = new idp.CognitoIdentityClient(config);
-    const providerName = `cognito-idp.${config.public.region}.amazonaws.com/${config.userPoolId}`;
-    const Logins: {[providerName: string]: string} = {};
-    Logins[providerName] = json.id_token;
-    const getIdCommand = new idp.GetIdCommand({
-      IdentityPoolId: config.public.identityPoolId, Logins
-    });
-    const getIdResponse = await client.send(getIdCommand);
-    const IdentityId = getIdResponse.IdentityId;
-
-    config.public.isDev && console.log("IdentityId", IdentityId);
-    // https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-cognito-identity/classes/getcredentialsforidentitycommand.html
-    const getCredentialsForIdentityCommand = new idp.GetCredentialsForIdentityCommand({
-      IdentityId, Logins
-    });
-    const getCredentialsResponse = client.send(getCredentialsForIdentityCommand);
-    const credentials = (await getCredentialsResponse).Credentials;
-    console.log({credentials});
-
-
+    json.id_token ?
+      setCookie(event, "id_token", json.id_token, {
+        // Cognito ID Pools とのやりとりで使うので JS から取得できる必要がある
+        httpOnly: false,
+        secure: true,
+        sameSite: "strict",
+        maxAge: json.expires_in,
+      })
+      : deleteCookie(event, "id_token");
     json.access_token ?
       setCookie(event, "access_token", json.access_token, {
         httpOnly: true,

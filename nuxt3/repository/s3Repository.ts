@@ -1,16 +1,16 @@
+import { Credentials } from '@aws-sdk/client-cognito-identity';
 import { S3Client } from '@aws-sdk/client-s3';
 
-// // import nodePolyfills from 'rollup-plugin-node-polyfills';
-// // nodePolyfills();
-
-// @ts-ignore
-// var global = global || window; var Buffer = Buffer || []; var process = process || { env: { DEBUG: undefined }, version: [] };
-
+// ________________________________
+// 
+// パッケージ「@aws-sdk/credential-providers」は、
 // No matching export in "browser-external:http" for import "request"
 // というエラーがローカル環境で発生するケースがある。
 // これは Vite が NodeJS ライブラリを単独でラップしないがためにコアライブラリをブラウザで使用できない
-// ことが起因のエラーであり、
-// その対処として、 `rollup-plugin-node-polyfills` をプロジェクトに導入している。
+// ことが起因のエラーであり、対処が困難（一応可能ではあるらしいが今後のメンテに差し支える可能性がある）なので、
+// credential-providers ではなく、 client-cognito-identity で都度 GetId, GetCredentialsForIdentity
+// を行う方針とした。
+//
 // 参考：
 //  - https://stackoverflow.com/questions/70060570/vitesse-vue3-issue-adding-libraries
 //  - https://github.com/ionic-team/rollup-plugin-node-polyfills
@@ -18,48 +18,27 @@ import { S3Client } from '@aws-sdk/client-s3';
 
 let memo = {} as { client?: S3Client};
 
-export const getS3Client = ({region, frontEndOption}: {
+export const getS3Client = ({region, cognitoCredentials}: {
   region: string,
-  frontEndOption?: {
-    identityPoolId: string,
-    idToken: string,
-  }
+  cognitoCredentials?: Credentials
 }) => {
+  // Cognito ID Pools から「一時的な認証情報」を得ているなら、Clientを再生成する（なのでメモをリセットする）。
+  if (cognitoCredentials) memo = {};
+  // 上記以外で前回のClientがあればそれを使う。
   if (memo.client) return memo.client;
 
-  /**
-   * Cognito ID Pools からクレデンシャルを取得する。
-   * なお、これはS3書き込みをフロントエンドで行うためのロール取得処理であって、
-   * バックエンドでは不要である（Lambdaに割り当てたロールがあるため）。
-   */
-  const credentials = (() => {
-
-    //TODO Viteとの噛み合わせがとても悪いので、現在はundefinedのみ
-    return undefined;
-
-    // if (!frontEndOption) return undefined;
-    // const {identityPoolId, idToken} = frontEndOption;
-    // const credentialProvider: CognitoIdentityCredentialProvider = fromCognitoIdentityPool({
-    //   identityPoolId: identityPoolId,
-    //   logins: {
-    //     "www.amazon.com": idToken,
-    //   },
-    //   clientConfig: {region: region},
-    // });
-    // return credentialProvider;
-  })()
+  const s3Credentials = 
+    cognitoCredentials && cognitoCredentials.AccessKeyId && cognitoCredentials.SecretKey ?
+    {
+      accessKeyId: cognitoCredentials.AccessKeyId,
+      secretAccessKey: cognitoCredentials.SecretKey,
+      sessionToken: cognitoCredentials.SessionToken,
+      expiration: cognitoCredentials.Expiration
+    } : undefined;
 
   const s3Client = new S3Client({
-    region,
-    // credentials: {
-    //   accessKeyId: "",
-    //   secretAccessKey: "",
-    // }
+    region, credentials: s3Credentials
   });
-
-  // const s3Client = new S3Client({
-  //   region
-  // });
   memo.client = s3Client;
   return s3Client;
 };

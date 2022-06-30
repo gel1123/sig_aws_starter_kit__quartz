@@ -8,7 +8,7 @@ export default defineEventHandler(async (event) => {
 
     const config = useRuntimeConfig();
     const verifier = CognitoJwtVerifier.create({
-      userPoolId: config.userPoolId,
+      userPoolId: config.public.userPoolId,
       tokenUse: "access",
       clientId: config.clientId,
     });

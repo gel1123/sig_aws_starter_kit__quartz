@@ -16,7 +16,6 @@ export default defineNuxtConfig({
     
     // Cognito関連
     clientId: process.env.COGNITO_CLIENT_ID,
-    userPoolId: process.env.COGNITO_USER_POOL_ID,
     clientSecret: process.env.COGNITO_CLIENT_SECRET,
     tokenEndpoint: process.env.COGNITO_TOKEN_ENDPOINT,
     loginEndpoint: process.env.COGNITO_LOGIN_ENDPOINT,
@@ -29,6 +28,7 @@ export default defineNuxtConfig({
       // S3を認証済みフロントエンドから操作するためのconfig
       region: process.env.AWS_REGION,
       bucket: process.env.S3_DATA_BUCKET,
+      userPoolId: process.env.COGNITO_USER_POOL_ID,
       identityPoolId: process.env.COGNITO_IDENTITY_POOL_ID,
 
       // CloudFront（AWS環境上ではリダイレクトURLと同一だが、ローカルでは異なる）
