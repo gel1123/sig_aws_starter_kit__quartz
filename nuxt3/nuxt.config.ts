@@ -2,6 +2,13 @@ import { defineNuxtConfig } from 'nuxt'
 
 // https://v3.nuxtjs.org/api/configuration/nuxt.config
 export default defineNuxtConfig({
+  vite: {
+    resolve: {
+      alias: {
+        "./runtimeConfig": "./runtimeConfig.browser"
+      }
+    }
+  },
   nitro: {
       preset: 'aws-lambda' // Nuxt3をLambdaとしてビルドする設定
   },
