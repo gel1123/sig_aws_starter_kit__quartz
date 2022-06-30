@@ -20,8 +20,8 @@ export default defineEventHandler(async (e) => {
   const config = useRuntimeConfig();
   const region = config.region;
   const Bucket = config.bucket;
-  const itemID = "test";
-  const fileName = /* body.fileName */ "item001.imagefile";
+  const fileName = body.fileName;
+  const itemID = body.itemID;
   const Key = `items/${itemID}/${fileName}`;
 
   const dataUrl = body.dataUrl;

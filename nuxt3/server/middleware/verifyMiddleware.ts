@@ -4,7 +4,10 @@ import { refresh } from "~~/service/auth/refresh";
 // https://v3.nuxtjs.org/guide/features/server-routes
 export default defineEventHandler(async (event) => {
 
-  if (event.req.url?.startsWith('/api/')) {
+  if (
+    event.req.url?.startsWith('/api/')
+    && !event.req.url?.startsWith("/api/getItemRecord")
+  ) {
 
     const config = useRuntimeConfig();
     const verifier = CognitoJwtVerifier.create({
